@@ -12,9 +12,7 @@ Reading Dataset.
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
 library(haven) #чтение .dta файлов
-library(scales)
-library(tsoutliers)
-library(gap)
+library(gap) #Chow test
 
 df <- read_dta(file = "housing.dta")
 ```
