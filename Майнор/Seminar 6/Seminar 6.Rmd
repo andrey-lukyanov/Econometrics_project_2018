@@ -7,22 +7,101 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# R
+Reading Dataset.
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven) #чтение .dta файлов
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+df <- read_dta(file = "crisis.dta")
+ts <- ts(df[,c("labor", "oil_b_rub", "rwage", "u")], start = c(1999, 1), end = c(2009, 12), frequency = 12)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+lin_m1 <- lm(ts[,"rwage"] ~ ts[,"oil_b_rub"] + ts[,"u"])
+summary(lin_m1)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Переделать график и добавить второй
+```{r}
+resid <- resid(lin_m1)
+plot(time(ts), resid)
+```
+
+## Durbin-Watson test???
+```{r}
+
+```
+
+## Breusch-Godfrey
+```{r}
+
+```
+
+## Newey-West estimators
+```{r}
+
+```
+
+## 3
+```{r}
+acf(resid, lag.max = 25)
+pacf(resid, lag.max = 25)
+```
+
+## 4
+```{r}
+plot(ts[,"labor"])
+plot(ts[,"u"])
+plot(ts[,"rwage"])
+plot(ts[,"oil_b_rub"])
+```
+
+## 5
+### Correlograms
+```{r}
+acf(ts[,"labor"], lag.max = 25)
+pacf(ts[,"labor"], lag.max = 25)
+acf(diff(ts[,"labor"]), lag.max = 25)
+pacf(diff(ts[,"labor"]), lag.max = 25)
+```
+
+```{r}
+acf(ts[,"u"], lag.max = 25)
+pacf(ts[,"u"], lag.max = 25)
+acf(diff(ts[,"u"]), lag.max = 25)
+pacf(diff(ts[,"u"]), lag.max = 25)
+```
+
+```{r}
+acf(ts[,"rwage"], lag.max = 25)
+pacf(ts[,"rwage"], lag.max = 25)
+acf(diff(ts[,"rwage"]), lag.max = 25)
+pacf(diff(ts[,"rwage"]), lag.max = 25)
+```
+
+```{r}
+acf(ts[,"oil_b_rub"], lag.max = 25)
+pacf(ts[,"oil_b_rub"], lag.max = 25)
+acf(diff(ts[,"oil_b_rub"]), lag.max = 25)
+pacf(diff(ts[,"oil_b_rub"]), lag.max = 25)
+```
+
+## 6
+```{r}
+
+```
+
+## 7
+### ARIMA models
+```{r}
+
+```
+
+
+
+
+
+
+
+
