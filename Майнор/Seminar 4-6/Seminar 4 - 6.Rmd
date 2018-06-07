@@ -1,0 +1,90 @@
+---
+title: "Seminar 4 - 6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# R
+Reading Dataset.
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven) #чтение .dta файлов
+library(scales)
+library(tsoutliers)
+
+df <- read_dta(file = "housing.dta")
+```
+
+## 2
+```{r}
+lin_m1 <- lm(df$price ~ df$lotsize + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
+)
+summary(lin_m1)
+```
+
+## 3
+```{r}
+lin_m2 <- lm(log(df$price) ~ df$lotsize + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
+)
+summary(lin_m2)
+lin_m3 <- lm(log(df$price) ~ log(df$lotsize) + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
+)
+summary(lin_m3)
+```
+
+## 4
+```{r}
+summary(log(df$price))
+mean_lnprice <- mean(log(df$price))
+df["price_new"] <- df$price/exp(mean_lnprice)
+df["lnprice_new"] = log(price_new)
+```
+
+```{r}
+lin_m4 <- lm(df$price_new ~ df$lotsize + df$bedrooms + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea)
+summary(lin_m4)
+rss1 <- sum(resid(lin_m4)^2)
+```
+
+```{r}
+lin_m5 <- lm(df$lnprice_new ~ df$lotsize + df$bedrooms + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea)
+summary(lin_m5)
+rss2 <- sum(resid(lin_m5)^2)
+```
+
+### Добавить нормальный print
+```{r}
+n <- nobs(lin_m5)
+chi2 <- n / 2 * abs(log(rss1/rss2))
+p_value <- pchisq(chi2, df=1, lower.tail=FALSE)
+p_value
+```
+
+## 5
+```{r}
+df$bedrooms2 <- 1L * (df$bedrooms < 3)
+df$bedrooms3 <- 1L * (df$bedrooms == 3)
+df$bedrooms4 <- 1L * (df$bedrooms == 4)
+df$bedrooms5 <- 1L * (df$bedrooms > 4)
+```
+
+```{r}
+lin_m6 <- lm(log(df$price) ~ log(df$lotsize) + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4)
+summary(lin_m6)
+```
+
+## 6
+```{r}
+lin_m7 <- lm(log(df$price) ~ log(df$lotsize) + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4 + df$bedrooms5)
+summary(lin_m7)
+```
+
+```{r}
+lin_m8 <- lm(log(df$price) ~ log(df$lotsize) + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4 + df$bedrooms5 - 1)
+summary(lin_m8)
+```
+
+## Chow test

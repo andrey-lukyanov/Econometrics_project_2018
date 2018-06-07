@@ -1,0 +1,356 @@
+-------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/andrey_lukyanov/Google_Drive/Studies/Year_3/Проект по метрике/Отобранны
+> е/Эконометрика 2 2013-2014/Seminar 19/sem19.log
+  log type:  text
+ opened on:  23 Apr 2018, 14:55:59
+
+. 
+. /*      *****************************************************/
+. /*      File Name:      fish.do                                         */
+. /*      Date:           February 10, 2014                                   */
+. /*      Author:         Elena S. Vakulenko                                      */
+. /*      Purpose:        Logit,Poisson models           */
+. /*      Input File:     fish.dta                                                        *
+> /
+. /*      Output File:    sem19.log                                           */  
+. /*      *****************************************************/
+. 
+. 
+. 
+. gen fish=0
+
+. replace fish=1 if count>0
+(108 real changes made)
+
+. sum
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      camper |        250        .588    .4931824          0          1
+       child |        250        .684    .8503153          0          3
+       count |        250       3.296    11.63503          0        149
+     persons |        250       2.528     1.11273          1          4
+        fish |        250        .432    .4963481          0          1
+
+. hist count
+(bin=15, start=0, width=9.9333333)
+
+. 
+. *Lodit model
+. logit fish  camper child persons
+
+Iteration 0:   log likelihood = -170.96761  
+Iteration 1:   log likelihood = -126.32146  
+Iteration 2:   log likelihood = -125.98447  
+Iteration 3:   log likelihood = -125.98323  
+Iteration 4:   log likelihood = -125.98323  
+
+Logistic regression                             Number of obs     =        250
+                                                LR chi2(3)        =      89.97
+                                                Prob > chi2       =     0.0000
+Log likelihood = -125.98323                     Pseudo R2         =     0.2631
+
+------------------------------------------------------------------------------
+        fish |      Coef.   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      camper |   1.017853   .3245971     3.14   0.002     .3816544    1.654052
+       child |  -2.137983   .3106641    -6.88   0.000    -2.746874   -1.529093
+     persons |   1.110389   .1910699     5.81   0.000     .7358987    1.484879
+       _cons |  -2.308713   .4612377    -5.01   0.000    -3.212722   -1.404703
+------------------------------------------------------------------------------
+
+. estat class
+
+Logistic model for fish
+
+              -------- True --------
+Classified |         D            ~D  |      Total
+-----------+--------------------------+-----------
+     +     |        58            11  |         69
+     -     |        50           131  |        181
+-----------+--------------------------+-----------
+   Total   |       108           142  |        250
+
+Classified + if predicted Pr(D) >= .5
+True D defined as fish != 0
+--------------------------------------------------
+Sensitivity                     Pr( +| D)   53.70%
+Specificity                     Pr( -|~D)   92.25%
+Positive predictive value       Pr( D| +)   84.06%
+Negative predictive value       Pr(~D| -)   72.38%
+--------------------------------------------------
+False + rate for true ~D        Pr( +|~D)    7.75%
+False - rate for true D         Pr( -| D)   46.30%
+False + rate for classified +   Pr(~D| +)   15.94%
+False - rate for classified -   Pr( D| -)   27.62%
+--------------------------------------------------
+Correctly classified                        75.60%
+--------------------------------------------------
+
+. lroc
+
+Logistic model for fish
+
+number of observations =      250
+area under ROC curve   =   0.8120
+
+. lsens
+
+. 
+. mfx
+
+Marginal effects after logit
+      y  = Pr(fish) (predict)
+         =  .40962093
+------------------------------------------------------------------------------
+variable |      dy/dx    Std. Err.     z    P>|z|  [    95% C.I.   ]      X
+---------+--------------------------------------------------------------------
+  camper*|   .2373805      .07175    3.31   0.001   .096746  .378015      .588
+   child |   -.517032      .07429   -6.96   0.000  -.662639 -.371425      .684
+ persons |   .2685271      .04733    5.67   0.000    .17576  .361294     2.528
+------------------------------------------------------------------------------
+(*) dy/dx is for discrete change of dummy variable from 0 to 1
+
+. 
+. net search margeff
+(contacting http://www.stata.com)
+
+9 packages found (Stata Journal and STB listed first)
+-----------------------------------------------------
+
+st0086 from http://www.stata-journal.com/software/sj5-3
+    SJ5-3 st0086.  Estimation of marginal effects using margeff / Estimation
+    of marginal effects using margeff / by Tam�s Bartus, Department of
+    Sociology and Social Policy, / Corvinus University Budapest / Support:
+    tamas.bartus@uni-corvinus.hu / After installation, type help margeff
+
+margeff from http://web.uni-corvinus.hu/bartus/stata
+    margeff.  Partial effects after estimation / This version:  2.2.0 (20
+    August 2008) / Author:  Tamas Bartus
+
+margeff8 from http://web.uni-corvinus.hu/bartus/stata
+    margeff8.  Average marginal effects for categorial regression models /
+    This version: 10 February 2006 (3rd update for Stata Journal submission) /
+    Author: Tamas Bartus (Corvinus University, Budapest)
+
+gdecomp from http://fmwww.bc.edu/RePEc/bocode/g
+    'GDECOMP': module to compute decomposition of outcome differentials after
+    nonlinear models / gdecomp implements a generalized Blinder-Oaxaca
+    decomposition / which applies to categorical and count outcomes (and
+    parallel to / this, to nonlinear regression models). First, the /
+
+margeff from http://fmwww.bc.edu/RePEc/bocode/m
+    'MARGEFF': module to compute average marginal effects for categorical and
+    limited dependent variable models / margeff calculates average marginal
+    effects, and standard errors / for marginal effects using the delta
+    method. Rather than / computing marginal effects at the means of the
+
+meoprobit from http://fmwww.bc.edu/RePEc/bocode/m
+    'MEOPROBIT': module to compute marginal effects after estimation of
+    ordered probit / -meoprobit- computes marginal effects at means and their
+    standard / errors after the estimation of an ordered probit model. The
+    mean / values are those of the estimation sample or of a sub-goup of the /
+
+mfx2 from http://fmwww.bc.edu/RePEc/bocode/m
+    'MFX2': module to enhance mfx command for obtaining marginal effects or
+    elasticities after estimation / mfx2 obtains marginal effects or
+    elasticities after estimation. / It is probably most useful after
+    multiple-outcome commands like / ologit, oprobit, gologit2, slogit,
+
+sum2 from http://fmwww.bc.edu/RePEc/bocode/s
+    'SUM2': module to store summary statistics / sum2 provides a fast and easy
+    way to store summary statistics for / use with standard table-making
+    programs such as outreg, / outreg2, estimates_table, xmltab, etc. sum2 was
+    motivated in part / by mfx2 and margeff that do the same thing for
+
+gdecomp from http://web.uni-corvinus.hu/bartus/stata
+    gdecomp.  Decomposition of outcome differentials after nonlinear models /
+    This version: 1.0.0 - 15 September 2006 (Presentation at 12th UK user
+    group meeting) / Author: Tamas Bartus (Corvinus University, Budapest)
+
+
+1 reference found in tables of contents
+---------------------------------------
+
+http://www.stata-journal.com/software/sj5-3/
+    Stata Journal volume 5, issue 3 / A multivariable scatterplot smoother /
+    Distribution function plots / Quantile plots, generalized / Logistic
+    regression when binary outcome is measured / with uncertainty / Tests for
+    seasonal data via Edwards and Walters & / Elwood tests / Confidence
+
+
+. margeff, dummies(camper)
+command margeff is unrecognized
+r(199);
+
+end of do-file
+
+r(199);
+
+. use "/Users/andrey_lukyanov/Google_Drive/Studies/Year_3/Проект по метрике/Отобранные/Экон
+> ометрика 2 2013-2014/Seminar 22/nerlove.dta", clear
+
+. do "/Users/andrey_lukyanov/Google_Drive/Studies/Year_3/Проект по метрике/Отобранные/Эконо
+> метрика 2 2013-2014/Seminar 22/problem3.do"
+
+. gen lnc=ln(c)
+
+. gen lnq=ln(q)
+
+. gen lnpw=ln(pw)
+
+. gen lnpk=ln(pk)
+
+. gen lnpf=ln(pf)
+
+. //OLS
+. reg lnc lnq lnpw lnpf lnpk, vce(robust)
+
+Linear regression                               Number of obs     =        145
+                                                F(4, 140)         =     175.97
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.9260
+                                                Root MSE          =     .39233
+
+------------------------------------------------------------------------------
+             |               Robust
+         lnc |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         lnq |    .720376   .0325976    22.10   0.000     .6559288    .7848231
+        lnpw |   .4381084    .245615     1.78   0.077    -.0474856    .9237024
+        lnpf |   .4264272   .0754086     5.65   0.000     .2773404    .5755139
+        lnpk |  -.2200668   .3235308    -0.68   0.497    -.8597046    .4195711
+       _cons |  -3.526319   1.717165    -2.05   0.042    -6.921247   -.1313903
+------------------------------------------------------------------------------
+
+. //Asy Wald test
+. test (lnpw+lnpk+lnpf=1)
+
+ ( 1)  lnpw + lnpf + lnpk = 1
+
+       F(  1,   140) =    0.64
+            Prob > F =    0.4246
+
+. 
+. //incorporating constraint
+. gen lnck=lnc-lnpk
+
+. gen lnpwk=lnpw-lnpk
+
+. gen lnpfk=lnpf-lnpk
+
+. reg lnck lnq lnpwk lnpfk, vce(robust)
+
+Linear regression                               Number of obs     =        145
+                                                F(3, 141)         =     252.12
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.9271
+                                                Root MSE          =     .39173
+
+------------------------------------------------------------------------------
+             |               Robust
+        lnck |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+         lnq |    .720667   .0324593    22.20   0.000     .6564972    .7848367
+       lnpwk |   .5939718   .1692173     3.51   0.001     .2594408    .9285028
+       lnpfk |    .414499   .0728224     5.69   0.000     .2705342    .5584639
+       _cons |  -4.685776   .8158946    -5.74   0.000    -6.298744   -3.072809
+------------------------------------------------------------------------------
+
+. 
+. //NLS with zero initial values (default)
+. nl (lnck={cons}+{lnq}*lnq+{lnpwk}*lnpwk+{lnpfk}*lnpfk+{alpha6}*lnq*(1+exp(-(lnq-{alpha7})
+> ))^(-1)), vce(robust)
+(obs = 145)
+
+Iteration 0:  residual SS =  12.62792
+Iteration 1:  residual SS =  12.57642
+Iteration 2:  residual SS =  12.57377
+Iteration 3:  residual SS =  12.55204
+Iteration 4:  residual SS =  12.52467
+Iteration 5:  residual SS =  12.51475
+Iteration 6:  residual SS =  12.51475
+Iteration 7:  residual SS =  12.51475
+Iteration 8:  residual SS =  12.51475
+Iteration 9:  residual SS =  12.51475
+
+
+Nonlinear regression                                Number of obs =        145
+                                                    R-squared     =     0.9578
+                                                    Adj R-squared =     0.9563
+                                                    Root MSE      =    .300057
+                                                    Res. dev.     =   56.26745
+
+------------------------------------------------------------------------------
+             |               Robust
+        lnck |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       /cons |  -6.636242   .6373155   -10.41   0.000    -7.896328   -5.376156
+        /lnq |   17.11359   33.27955     0.51   0.608      -48.686    82.91318
+      /lnpwk |   .4883236   .1335625     3.66   0.000     .2242468    .7524005
+      /lnpfk |   .4414172   .0664656     6.64   0.000      .310003    .5728315
+     /alpha6 |  -16.19262    33.2967    -0.49   0.628    -82.02612    49.64088
+     /alpha7 |  -.8441044   2.354461    -0.36   0.721    -5.499293    3.811084
+------------------------------------------------------------------------------
+  Parameter cons taken as constant term in model
+
+. //NLS with specified initial values
+. nl (lnck={cons}+{lnq}*lnq+{lnpwk}*lnpwk+{lnpfk}*lnpfk+{alpha6}*lnq*(1+exp(-(lnq-{alpha7})
+> ))^(-1)), in(cons 0 lnq 0 lnpwk 0 lnpfk 0 alpha6 0 alpha7 6.55) vce(robust)
+(obs = 145)
+
+Iteration 0:  residual SS =  13.77778
+Iteration 1:  residual SS =  13.72866
+Iteration 2:  residual SS =  13.72108
+Iteration 3:  residual SS =  13.72023
+Iteration 4:  residual SS =  13.72013
+Iteration 5:  residual SS =  13.72011
+Iteration 6:  residual SS =  13.72011
+Iteration 7:  residual SS =  13.72011
+Iteration 8:  residual SS =  13.72011
+Iteration 9:  residual SS =  13.72011
+Iteration 10:  residual SS =  13.72011
+
+
+Nonlinear regression                                Number of obs =        145
+                                                    R-squared     =     0.9538
+                                                    Adj R-squared =     0.9521
+                                                    Root MSE      =   .3141749
+                                                    Res. dev.     =   69.60089
+
+------------------------------------------------------------------------------
+             |               Robust
+        lnck |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+       /cons |  -4.042834   .7170931    -5.64   0.000    -5.460655   -2.625014
+        /lnq |   .4325433   .0988629     4.38   0.000     .2370738    .6280128
+      /lnpwk |   .4792686   .1406979     3.41   0.001     .2010839    .7574532
+      /lnpfk |   .4747441   .0699052     6.79   0.000     .3365291     .612959
+     /alpha6 |   .2278728    .054725     4.16   0.000     .1196717    .3360739
+     /alpha7 |   6.836936    .352519    19.39   0.000     6.139943    7.533929
+------------------------------------------------------------------------------
+  Parameter cons taken as constant term in model
+
+. 
+. //Conventional smooth transition model
+. 
+end of do-file
+
+. use "/Users/andrey_lukyanov/Google_Drive/Studies/Year_3/Проект по метрике/Отобранные/Экон
+> ометрика 2 2013-2014/Seminar 25/schooling.dta", clear
+
+. do "/Users/andrey_lukyanov/Google_Drive/Studies/Year_3/Проект по метрике/Отобранные/Эконо
+> метрика 2 2013-2014/Seminar 25/sem25.do"
+
+. set more off
+
+. 
+. log using sem25.log, text replace
+log file already open
+r(604);
+
+end of do-file
+
+r(604);
+

@@ -1,0 +1,117 @@
+---
+title: "Seminar 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R
+
+Reading Dataset.
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven) #чтение .dta файлов
+library(kdensity) #ядерное сглаживание
+library(scales) #отображение нескольких графиков на одном.
+library(tsoutliers) #тест на нормальность
+
+df <- read_dta(file = "housing.dta")
+#attach(data)
+```
+
+## 2
+Summary.
+```{r}
+summary(df)
+```
+
+## 3
+```{r}
+lin_m1 <- lm(df$price ~ df$lotsize)
+plot(df$lotsize, df$price)
+abline(lin_m1)
+```
+
+```{r}
+lin_m2 <- lm(df$price ~ df$bedrooms)
+plot(df$bedrooms, df$price)
+abline(lin_m2)
+```
+
+```{r}
+lin_m3 <- lm(df$price ~ df$bathrms)
+plot(df$bathrms, df$price)
+abline(lin_m3)
+```
+
+```{r}
+omit_4 <- filter(df, df$bathrms != 4)
+omit_4
+lin_m4 <- lm(omit_4$price ~ omit_4$bathrms)
+plot(omit_4$bathrms, omit_4$price)
+abline(lin_m4)
+```
+
+```{r}
+lin_m5 <- lm(df$price ~ df$bedrooms)
+plot(df$bedrooms, df$price)
+abline(lin_m5)
+```
+
+## 4
+```{r}
+m<-mean(df$price)
+std<-sqrt(var(df$price))
+hist(df$price, density=20, breaks=20, prob=TRUE, 
+     xlab="Price",
+     main='')
+
+curve(dnorm(x, mean=m, sd=std), 
+      col="darkblue", lwd=2, add=TRUE, yaxt="n")
+```
+
+## Нужно объединить графики.
+```{r}
+kde = kdensity(df$price, kernel = "gaussian")
+hist(df$price, density=20, breaks=20, prob=TRUE, 
+     xlab="",
+     main='')
+plot(kde)
+```
+
+## 5
+```{r}
+lin_m6 <- lm(df$price ~ df$lotsize + df$bedrooms + df$bathrms + df$airco)
+resid <- resid(lin_m6)
+plot(resid)
+#plot(df$price, resid)
+```
+
+## 7
+```{r}
+price_hat <- predict(lin_m6)
+plot(df$price, price_hat)
+abline(0,1, col = 'red')
+```
+
+```{r}
+m<-mean(resid)
+std<-sqrt(var(resid))
+hist(resid, density=40, breaks=40, prob=TRUE, 
+     xlab="Residuals",
+     main='')
+curve(dnorm(x, mean=m, sd=std), 
+      col="darkblue", lwd=2, add=TRUE, yaxt="n")
+```
+
+## 8
+```{r}
+#отличается от sktest в stata
+tseries::jarque.bera.test(resid)
+```
+
+```{r}
+shapiro.test(resid)
+```

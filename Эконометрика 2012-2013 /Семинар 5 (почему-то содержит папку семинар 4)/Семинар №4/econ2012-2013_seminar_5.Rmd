@@ -1,0 +1,126 @@
+Загружаем нужные пакеты:
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("knitr") # создание отчётов
+
+library(tidyverse) # коллекция пакетов: ggplot2, dplyr, ...
+library(lmtest) # тесты для линейных моделей
+library(broom) # стандартизация информации о модели
+library(car) # проверка гипотез
+library(ggplot2) # для графиков
+```
+
+Загрузим данные из файла mrw.csv
+
+```{r}
+mrw <- read.csv(file = '~/mrw.csv', sep =',')
+glance(mrw)
+```
+
+Создадим логарифмы переменных: gdp60, gdp85, gdpgrow, inv, school и запишем полученные результаты в новые переменные. 
+
+```{r}
+lngdp60 <- log(mrw$gdp60)
+mrw$lngdp60 <- lngdp60 
+lngdp85 <- log(mrw$gdp85)
+mrw$lngdp85 <- lngdp85 
+lngdpgrow <- log(mrw$gdpgrow)
+mrw$lngdpgrow <- lngdpgrow
+lninv <- log(mrw$inv/100)
+mrw$lninv <- lninv
+lnschool <- log(mrw$school)
+mrw$lnschool <- lnschool 
+```
+
+Создадим логарифм переменной popgrow, как \[lnngdelta = ln(popgrow+0.05)\], т.к. в статье предполагается, что \[g + \delta = 0.05\] для экономик США
+
+```{r}
+lnngdelta = log(mrw$popgrow/100+0.05)
+mrw$lnngdelta <- lnngdelta
+```
+
+Оценим модель Солоу отдельно для стран не экспортеров нефти, с хорошими данными и стран OECD (с использованием дамми переменных).
+
+\[\ln(\frac{Y}{L}) = \alpha + \frac{\alpha}{1 - \alpha}\ln(s) - \frac{\alpha}{1 - \alpha}\ln(n+g+\delta) + \epsilon \]
+
+В наших обозначениях это будет выглядеть так:
+
+\[lngdp85 = \beta_0 + \beta_1lngdelta + \beta_2lninv + \epsilon\]
+
+```{r}
+model_solow_1 <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw[mrw$nonoil == 1, ])
+model_solow_2 <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw[mrw$intermed == 1, ])
+model_solow_3 <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw[mrw$oecd == 1, ])
+summary(model_solow_1)
+summary(model_solow_2)
+summary(model_solow_3)
+```
+
+Протестируем линейное ограничение на коэффициенты модели: \[\beta_0 + \beta_1 = 0\]
+
+```{r}
+model <- lm(formula = lngdp85 ~ lnngdelta + lninv, data = mrw)
+linearHypothesis(model, c("lnngdelta + lninv = 0") ,test="F")
+```
+
+Теперь оценим наши модели, учитывая ограничение:
+
+```{r}
+lninv_lnngdelta = lninv - lnngdelta
+mrw$lninv_lnngdelta = lninv_lnngdelta
+model_solow_1_with_constraint <- lm(lngdp85 ~ lninv_lnngdelta,data = mrw[mrw$nonoil == 1, ])
+model_solow_2_with_constraint <- lm(lngdp85 ~ lninv_lnngdelta,data = mrw[mrw$intermed == 1, ])
+model_solow_3_with_constraint <- lm(lngdp85 ~ lninv_lnngdelta,data = mrw[mrw$oecd == 1, ])
+summary(model_solow_1_with_constraint)
+summary(model_solow_2_with_constraint)
+summary(model_solow_3_with_constraint)
+```
+
+Проделаем тест Чоу о равенстве коэффициентов для нефтяных и неняфтяных стран:
+
+```{r}
+model_total <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw)
+model_nonoil1 <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw[mrw$nonoil == 1, ])
+model_nonoil0 <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw[mrw$nonoil == 0, ])
+
+RSS_total <- sum(model_total$residuals^2)
+RSS_nonoil1 <- sum(model_nonoil1$residuals^2)
+RSS_nonoil0 <- sum(model_nonoil0$residuals^2)
+
+F_r <- ((RSS_total - RSS_nonoil1 - RSS_nonoil0)/ 4 )/ ((RSS_nonoil1 + RSS_nonoil0)/ (121 - 8))
+
+value <- pf(F_r, 4, 113) # значение функции распределения Фишера с указанными степенями свободы
+a = 1 - value
+a
+
+```
+
+Оценим расширенную модель, используя логарифм переменной school:
+
+```{r}
+model_solow_1_with_school <- lm(formula = lngdp85 ~ lnngdelta + lninv + lnschool,data = mrw[mrw$nonoil == 1, ])
+model_solow_2_with_school <- lm(formula = lngdp85 ~ lnngdelta + lninv + lnschool,data = mrw[mrw$intermed == 1, ])
+model_solow_3_with_school <- lm(formula = lngdp85 ~ lnngdelta + lninv + lnschool,data = mrw[mrw$oecd == 1, ])
+summary(model_solow_1_with_school)
+summary(model_solow_2_with_school)
+summary(model_solow_3_with_school)
+```
+
+Построим модель для оценки безусловной конвергенции: 
+
+```{r}
+lngdp85_lngdp60 = lngdp85 - lngdp60
+mrw$lngdp85_lngdp60 = lngdp85_lngdp60
+model_con_1 <- lm(formula = lngdp85_lngdp60 ~ lngdp60,data = mrw[mrw$nonoil == 1, ])
+model_con_2 <- lm(formula = lngdp85_lngdp60 ~ lngdp60,data = mrw[mrw$intermed == 1, ])
+model_con_3 <- lm(formula = lngdp85_lngdp60 ~ lngdp60,data = mrw[mrw$oecd == 1, ])
+summary(model_con_1)
+summary(model_con_2)
+summary(model_con_3)
+```
+
+График:
+```{r}
+ggplot(mrw) + geom_point(aes(x = lngdp60,y = lngdp85_lngdp60))
+```
+
