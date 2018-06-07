@@ -14,6 +14,7 @@ library(tidyverse)
 library(haven) #чтение .dta файлов
 library(scales)
 library(tsoutliers)
+library(gap)
 
 df <- read_dta(file = "housing.dta")
 ```
@@ -27,10 +28,13 @@ summary(lin_m1)
 
 ## 3
 ```{r}
-lin_m2 <- lm(log(df$price) ~ df$lotsize + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
+df$lnprice <- log(df$price)
+lin_m2 <- lm(df$lnprice ~ df$lotsize + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
 )
 summary(lin_m2)
-lin_m3 <- lm(log(df$price) ~ log(df$lotsize) + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
+
+df$lnlotsize <- log(df$lotsize)
+lin_m3 <- lm(df$lnprice ~ df$lnlotsize + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
 )
 summary(lin_m3)
 ```
@@ -39,8 +43,8 @@ summary(lin_m3)
 ```{r}
 summary(log(df$price))
 mean_lnprice <- mean(log(df$price))
-df["price_new"] <- df$price/exp(mean_lnprice)
-df["lnprice_new"] = log(price_new)
+df$price_new <- df$price/exp(mean_lnprice)
+df$lnprice_new <- log(df$price_new)
 ```
 
 ```{r}
@@ -72,19 +76,26 @@ df$bedrooms5 <- 1L * (df$bedrooms > 4)
 ```
 
 ```{r}
-lin_m6 <- lm(log(df$price) ~ log(df$lotsize) + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4)
+lin_m6 <- lm(df$lnprice ~ df$lnlotsize + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4)
 summary(lin_m6)
 ```
 
 ## 6
 ```{r}
-lin_m7 <- lm(log(df$price) ~ log(df$lotsize) + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4 + df$bedrooms5)
+lin_m7 <- lm(df$lnprice ~ df$lnlotsize + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4 + df$bedrooms5)
 summary(lin_m7)
 ```
 
 ```{r}
-lin_m8 <- lm(log(df$price) ~ log(df$lotsize) + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4 + df$bedrooms5 - 1)
+lin_m8 <- lm(df$lnprice ~ df$lnlotsize + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4 + df$bedrooms5 - 1)
 summary(lin_m8)
 ```
 
 ## Chow test
+```{r}
+df_1 <- filter(df, df$bedrooms < 3)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
+y_1 <- filter(df, df$bedrooms < 3)[, c("lnprice")]
+df_2 <- filter(df, df$bedrooms > 2)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
+y_2 <- filter(df, df$bedrooms > 2)[, c("lnprice")]
+chow.test(y_1,df_1,y_2,df_2)
+```
