@@ -1,0 +1,34 @@
+---
+title: "Seminar 22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven) #чтение .dta файлов
+
+df <- read_dta(file = "nerlove.dta")
+```
+
+```{r}
+df$lnc <- log(df$c)
+df$lnq <- log(df$q)
+df$lnpw <- log(df$pw)
+df$lnpk <- log(df$pk)
+df$lnpf <- log(df$pf)
+```
+
+## How to estimate robust variance of coefficients???
+```{r}
+lin_m1 <- lm(lnc ~ lnq + lnpw + lnpf + lnpk, data = df)
+summary(lin_m1)
+```
+
+```{r}
+waldTest(object, hypothesis)
+```
+

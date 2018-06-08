@@ -1,0 +1,40 @@
+---
+title: "Seminar 11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven) #чтение .dta файлов
+library(AER)
+
+df <- read_dta(file = "Funds.dta")
+#ts <- ts(df[,c("crsp", "ge", "ibm", "mc")], start = c(1999, 1), end = #c(2009, 12), frequency = 12)
+```
+
+## OLS regression
+```{r}
+lin_m1 <- lm(df$loge ~ df$logsize)
+summary(lin_m1)
+```
+
+## IV regression
+```{r}
+iv <- ivreg(df$loge ~ df$logsize | df$age)
+summary(iv)
+```
+
+## Two step LS procedure
+```{r}
+lin_m2 <- lm(df$logsize ~ df$age)
+df$logsize_hat <- predict(lin_m2)
+
+lin_m3 <- lm(df$loge ~ df$logsize_hat)
+```
+
+
+

@@ -1,0 +1,30 @@
+---
+title: "Seminar 15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+n <- 500
+beta1 <- 1
+beta2 <- 2
+gamma <- 0.5
+```
+
+```{r}
+e <- sqrt(3) * qnorm(runif(n))
+x1 <- qnorm(runif(n))
+x2 <- runif(n)
+y <- beta1 * x1 + (beta2 * x2)^gamma + e
+summary(y)
+```
+
+```{r}
+non_lm <- nls(y ~ beta_1 * x1 + beta_2 * (x2) ^ gamma_,
+              start=list(beta_1=1, beta_2=1, gamma_=1))
+summary(non_lm)
+```
+

@@ -1,0 +1,44 @@
+---
+title: "Seminar 9"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven) #чтение .dta файлов
+library(lmtest) #dw test, bg test
+library(sandwich) #Newey-West
+
+df <- read_dta(file = "daily-data-crsp.dta")
+#ts <- ts(df[,c("crsp", "ge", "ibm", "mc")], start = c(1999, 1), end = #c(2009, 12), frequency = 12)
+```
+
+```{r}
+lin_m <- lm(df$ibm ~ df$crsp)
+summary(lin_m)
+```
+
+## Durbin-Watson d statistic to test for first-order serial correlation
+```{r}
+dwtest(df$ibm ~ df$crsp)
+```
+
+## Test for ARCH effects in the residuals???
+```{r}
+
+```
+
+## Breusch-Godfrey test for higher-order serial correlation
+```{r}
+bgtest(df$ibm ~ df$crsp, order = 7)
+```
+
+## Regression with Newey-West standard errors, bandwidth [4(n/100)^{1/3}] ~ Andrews (1991)
+```{r}
+coeftest(lin_m, vcov=NeweyWest(lin_m, lag = 11))
+```
+
