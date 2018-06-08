@@ -95,7 +95,8 @@ pacf(diff(ts[,"oil_b_rub"]), lag.max = 25)
 ## 7
 ### ARIMA models
 ```{r}
-
+arima_1 <- arima(ts[,"labor"], order = c(1, 0, 1))
+arima_1
 ```
 
 
