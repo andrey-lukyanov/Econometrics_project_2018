@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
 library(haven) #чтение .dta файлов
+library(car)
 
 df <- read_dta(file = "nerlove.dta")
 ```
@@ -28,7 +29,36 @@ lin_m1 <- lm(lnc ~ lnq + lnpw + lnpf + lnpk, data = df)
 summary(lin_m1)
 ```
 
+## Значение тестовой статистики отличается от stata
 ```{r}
-waldTest(object, hypothesis)
+linearHypothesis(lin_m1, "lnpw+lnpk+lnpf=1")
 ```
+
+## Incorporating constraint
+```{r}
+df$lnck <- df$lnc - df$lnpk
+df$lnpwk <- df$lnpw - df$lnpk
+df$lnpfk <- df$lnpf - df$lnpk
+lin_m2 <- lm(lnck ~ lnq + lnpwk + lnpfk, data = df)
+summary(lin_m2)
+```
+
+## NLS 
+### (не работает с начальными значениями из исходного файла, более того, выдает другие оценки)
+```{r}
+nls_1 <- nls(lnck ~ cons_ + lnq_ * lnq + lnpwk_ * lnpwk + lnpfk_ * lnpfk + alpha6_ * lnq * (1 + exp(-(lnq - alpha7_)))^(-1), data = df)
+summary(nls_1)
+```
+
+## Conventional smooth transition model
+#### Почему-то выдает ошибку градиента
+```{r}
+nls_2 <- nls(lnck ~ cons_+lnq_ * lnq * (1 - (1 + exp(-(lnq - alpha7_)))^(-1)) + lnpwk_ * lnpwk + lnpfk_ * lnpfk + alpha6_ * lnq * (1 + exp(-(lnq - alpha7_)))^(-1), data = df)
+summary(nls_2)
+```
+
+
+
+
+
 
