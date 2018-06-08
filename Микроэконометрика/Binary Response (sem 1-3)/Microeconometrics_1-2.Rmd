@@ -1,0 +1,24 @@
+---
+output: html_document
+---
+## R
+Reading dataset
+
+```{r}
+
+library(haven) # Чтение dta файлов
+df <- read_dta(file = "bwght.dta")
+```
+Генерируем переменную smoke
+
+```{r}
+df$smoke <- 1L * (df$cigs!=0)
+```
+Summary по переменным
+
+```{r}
+summary(df[, c("smoke", 'faminc', 'cigtax', 'cigprice', 'fatheduc', 'motheduc', 'parity', 'white' )])
+```
+
+Summary если мама и папа хоть как-то образованны
+
