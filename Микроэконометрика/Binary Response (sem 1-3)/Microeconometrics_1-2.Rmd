@@ -5,8 +5,10 @@ output: html_document
 Reading dataset
 
 ```{r}
-
+library(dplyr)
+library(knitr)
 library(haven) # Чтение dta файлов
+library(rmarkdown)
 df <- read_dta(file = "bwght.dta")
 ```
 Генерируем переменную smoke
@@ -20,5 +22,45 @@ Summary по переменным
 summary(df[, c("smoke", 'faminc', 'cigtax', 'cigprice', 'fatheduc', 'motheduc', 'parity', 'white' )])
 ```
 
-Summary если мама и папа хоть как-то образованны
+Summary без пропущенных значений
+
+
+```{r}
+df2 <- subset(df, !df$fatheduc=='NA' & !df$motheduc=='NA')
+summary(df2[, c("smoke", 'faminc', 'cigtax', 'cigprice', 'fatheduc', 'motheduc', 'parity', 'white')])
+```
+
+Модель линейной вероятности
+```{r}
+linprob <- lm(smoke ~ faminc + cigtax + cigprice + fatheduc + motheduc + parity + white, data = df2)
+summary(linprob)
+```
+Оценка p(smoke=1|x)
+```{r}
+predictions <- predict.lm(linprob)
+```
+Генерируем smoke_ols как 1 если вероятность по модели больше 0.5 и наоборот
+```{r}
+smoke_ols <- 1L * (predictions > 0.5)
+```
+
+Число совпадений прогноза и исходных данных: 
+```{r}
+sum(smoke_ols == df2$smoke)
+```
+Логит-модель:
+```{r}
+logitmodel <- glm(smoke ~ faminc + cigtax + cigprice + fatheduc + motheduc + parity + white, data = df2, family = binomial(link = logit))
+summary(logitmodel)
+logitpred <- predict(logitmodel)
+smoke_logit <- 1L * (logitpred > 0.5)
+accuracy <- mean(smoke_logit == df2$smoke)
+print(paste('Accuracy:', accuracy))
+```
+Сравнение коэффициентов по моделям:
+```{r}
+coef(logitmodel)
+coef(linprob)
+```
+
 
