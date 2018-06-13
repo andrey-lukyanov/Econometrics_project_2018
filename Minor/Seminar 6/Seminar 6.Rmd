@@ -28,7 +28,7 @@ resid <- resid(lin_m1)
 plot(time(ts), resid)
 ```
 
-## Durbin-Watson test???
+## Durbin-Watson test
 ```{r}
 
 ```
@@ -99,8 +99,161 @@ arima_1 <- arima(ts[,"labor"], order = c(1, 0, 1))
 arima_1
 ```
 
+```{r}
+pred <- predict(arima_1, n.ahead = 12)
+```
+
+## Отличается от стата (почему-то в стата есть константа).
+```{r}
+arima_2 <- arima(ts[,"labor"], order = c(1, 1, 0))
+arima_2
+```
+
+```{r}
+arima_3 <- arima(ts[,"labor"], order = c(1, 0, 0))
+arima_3
+```
+
+```{r}
+arima_4 <- arima(ts[,"labor"], order = c(2, 0, 0))
+arima_4
+```
+
+```{r}
+arima_5 <- arima(ts[,"labor"], order = c(3, 0, 0))
+arima_5
+```
+
+### Нужно вывести конечную талицу
+
+## Stata
+```{r}
+library(devtools)
+devtools::install_github("Hemken/Statamarkdown")
+```
+
+Setting up Stata.
+```{r, echo=FALSE, message=FALSE}
+library(Statamarkdown)
+stataexe <- find_stata()
+knitr::opts_chunk$set(engine.path=stataexe)
+```
+
+```{stata}
+#Use Crisis.dta
+
+**1**
+gen n=_n
+tsset n, monthly
 
 
+reg rwage u oil_b_rub
+
+**2**
+*Testing autocorrelation
+predict resid, resid
+twoway dot resid n
+twoway dot resid L.resid
+
+*Durbin-Watson test
+estat dwatson
+
+*Breusch-Godfrey
+estat bgodfrey
+estat bgodfrey, lags(1/2)
+
+*Newey-West estimators
+newey rwage u oil_b_rub, lag(1)
+
+
+**3**
+corrgram resid, lags(25)
+
+
+**4**
+
+twoway line labor n
+tsline labor
+twoway line u n 
+twoway line rwage n 
+twoway line oil_b_rub n
+
+**5**
+*Correlograms
+
+corrgram labor, lags(25)
+corrgram D.labor, lags(25)
+
+ac labor, saving(ac)
+pac labor, saving(pac)
+graph combine ac.gph pac.gph,  title("Correlograms")
+
+corrgram u, lags(25)
+corrgram D.u, lags(25)
+corrgram rwage, lags(25)
+corrgram D.rwage, lags(25)
+corrgram oil_b_rub, lags(25)
+corrgram D.oil_b_rub, lags(25)
+
+
+**6**
+dfuller labor, trend regress lags(2)
+dfuller labor, regress lags(2)
+dfuller D.labor
+
+dfuller oil_b_rub, trend regress lags(1)
+dfuller oil_b_rub, regress lags(1)
+
+dfuller D.oil_b_rub, trend regress lags(1)
+dfuller D.oil_b_rub,  regress lags(1)
+
+**7**
+*ARIMA models
+
+arima labor, ar(1) ma(1)
+
+*Information criteria
+estat ic
+
+*Prediction
+
+tsappend, add(12)
+
+predict labor_p, xb 
+
+
+predict labor_p1, y 
+
+arima labor, arima(1,1,0)
+
+*As example
+
+arima labor, ar(1)
+est store ar1c
+arima labor, ar(1/2)
+est store ar12c
+arima labor, ar(1/3)
+est store ar123c
+est tab ar1c ar12c ar123c, stats(aic bic) title(Labor) 
+
+*Another variant
+arima labor, ar(1)
+outreg2 using sem6.doc, replace word dec(3) ///
+alpha(.01 , .05, .1) symbol(*** , **, *) label
+
+arima labor, ar(1/2)
+outreg2 using sem6.doc, append word dec(3) ///
+alpha(.01 , .05, .1) symbol(*** , **, *) label
+
+arima labor, ar(1/3)
+outreg2 using sem6.doc, append word dec(3) ///
+alpha(.01 , .05, .1) symbol(*** , **, *) label
+
+
+log close
+*clear
+*exit
+```
 
 
 
