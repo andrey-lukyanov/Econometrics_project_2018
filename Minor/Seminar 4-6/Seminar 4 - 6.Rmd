@@ -19,7 +19,7 @@ df <- read_dta(file = "housing.dta")
 
 ## 2
 ```{r}
-lin_m1 <- lm(df$price ~ df$lotsize + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
+lin_m1 <- lm(price ~ lotsize + bedrooms + bathrms + airco + driveway + recroom + fullbase + gashw + stories + garagepl + prefarea, data = df
 )
 summary(lin_m1)
 ```
@@ -27,12 +27,12 @@ summary(lin_m1)
 ## 3
 ```{r}
 df$lnprice <- log(df$price)
-lin_m2 <- lm(df$lnprice ~ df$lotsize + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
+lin_m2 <- lm(lnprice ~ lotsize + bedrooms + bathrms + airco + driveway + recroom + fullbase + gashw + stories + garagepl + prefarea, data =df
 )
 summary(lin_m2)
 
 df$lnlotsize <- log(df$lotsize)
-lin_m3 <- lm(df$lnprice ~ df$lnlotsize + df$bedrooms + df$bathrms + df$airco + df$driveway + df$recroom + df$fullbase + df$gashw + df$stories + df$garagepl + df$prefarea
+lin_m3 <- lm(lnprice ~ lnlotsize + bedrooms + bathrms + airco + driveway + recroom + fullbase + gashw + stories + garagepl + prefarea, data = df
 )
 summary(lin_m3)
 ```
@@ -46,13 +46,13 @@ df$lnprice_new <- log(df$price_new)
 ```
 
 ```{r}
-lin_m4 <- lm(df$price_new ~ df$lotsize + df$bedrooms + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea)
+lin_m4 <- lm(price_new ~ lotsize + bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea, data = df)
 summary(lin_m4)
 rss1 <- sum(resid(lin_m4)^2)
 ```
 
 ```{r}
-lin_m5 <- lm(df$lnprice_new ~ df$lotsize + df$bedrooms + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea)
+lin_m5 <- lm(lnprice_new ~ lotsize + bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea, data = df)
 summary(lin_m5)
 rss2 <- sum(resid(lin_m5)^2)
 ```
@@ -74,18 +74,18 @@ df$bedrooms5 <- 1L * (df$bedrooms > 4)
 ```
 
 ```{r}
-lin_m6 <- lm(df$lnprice ~ df$lnlotsize + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4)
+lin_m6 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4, data = df)
 summary(lin_m6)
 ```
 
 ## 6
 ```{r}
-lin_m7 <- lm(df$lnprice ~ df$lnlotsize + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4 + df$bedrooms5)
+lin_m7 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4 + bedrooms5, data = df)
 summary(lin_m7)
 ```
 
 ```{r}
-lin_m8 <- lm(df$lnprice ~ df$lnlotsize + df$bathrms + df$stories + df$driveway + df$recroom + df$fullbase + df$gashw + df$airco + df$garagepl + df$prefarea + df$bedrooms2 + df$bedrooms3 + df$bedrooms4 + df$bedrooms5 - 1)
+lin_m8 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4 + bedrooms5 - 1, data = df)
 summary(lin_m8)
 ```
 
