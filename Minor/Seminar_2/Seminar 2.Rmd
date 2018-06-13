@@ -11,8 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 Reading Dataset.
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
-library(haven)
-library(car)
+library(haven) # для чтения .dta файлов
+library(car) # для линейных гипотез
 
 data <- read_dta(file = "Seminar2.dta")
 ```
@@ -25,23 +25,22 @@ rename(data, n = A,
 
 Generate variables.
 ```{r}
-data[['y_delta']] <- data[['DELTA']] - data[['RKFREE']]
+data$y_delta <- data$DELTA - data$RKFREE
 ```
 
 Dropping NaNs.
 ```{r}
 data <- na.omit(data)
-attach(data)
 ```
 
 Generating X.
 ```{r}
-x <- MARKET - RKFREE
+data$x <- data$MARKET - data$RKFREE
 ```
 
 Regression.
 ```{r}
-olsreg <- lm(y_delta ~ x)
+olsreg <- lm(y_delta ~ x, data = data)
 summary(olsreg)
 ```
 
@@ -50,20 +49,20 @@ Loop.
 names = list("BOISE", "CITCRP", "CONED", "CONTIL", "DATGEN", "DEC", "GENMIL", "GERBER", "IBM", "MOTOR", "PANAM", "PSNH", "TANDY", "TEXACO", "WEYER")
 
 for(i in names){
-  data[[paste('y',i ,sep = '_')]] <- data[[i]] - RKFREE
+  data[[paste('y',i ,sep = '_')]] <- data[[i]] - data$RKFREE
 }
 
 y_names = list("y_BOISE", "y_CITCRP", "y_CONED", "y_CONTIL", "y_DATGEN", "y_DEC", "y_GENMIL", "y_GERBER", "y_IBM", "y_MOTOR", "y_PANAM", "y_PSNH", "y_TANDY", "y_TEXACO", "y_WEYER")
 
 for(i in y_names){
-  olsreg <- lm(data[[i]] ~ x)
+  olsreg <- lm(data[[i]] ~ data$x)
   print(summary(olsreg))
 }
 ```
 
 Testing hypothesis.
 ```{r}
-linearHypothesis(olsreg, "x = 1") 
+linearHypothesis(olsreg, "data$x = 1") 
 ```
 
 ## Python.
