@@ -7,3 +7,56 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(boot)
+library(simpleboot)
+```
+
+```{r}
+n <- 1000
+beta1 <- 1
+beta2 <- 2
+```
+
+```{r}
+set.seed(1)
+e <- sqrt(3) * qnorm(runif(n))
+x1 <- qnorm(runif(n))
+x2 <- qnorm(runif(n))
+df <-data.frame(x1=x1, x2=x2)
+y <- beta1 * x1 + beta2 * x2 + e
+summary(y)
+```
+
+```{r}
+lin_m1 <- lm(y ~ x1 + x2 - 1)
+summary(lin_m1)
+```
+
+## Bootstrap regression
+```{r}
+lboot <- lm.boot(lin_m1, R = 1000)
+summary(lboot)
+```
+
+```{r}
+summary(lin_m1)$coefficients[1, 1]
+summary(lin_m1)$coefficients[2, 1]
+```
+
+## Дальше нужно вывести плотность для статистики (Не заработало)
+```{r}
+# function to obtain theta from the data 
+theta <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula)
+  return(summary(lin_m1)$coefficients[1, 1]/summary(lin_m1)$coefficients[2, 1])
+} 
+# bootstrapping with 1000 replications 
+results <- boot(data = df, statistic=theta, 
+  	R=1000, formula=y~x1+x2)
+
+# view results
+plot(results)
+```
+

@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
 library(haven) #чтение .dta файлов
-library(car)
+library(car) #Тест гипотез
 
 df <- read_dta(file = "nerlove.dta")
 ```

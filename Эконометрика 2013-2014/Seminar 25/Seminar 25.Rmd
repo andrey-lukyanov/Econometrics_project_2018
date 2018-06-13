@@ -7,22 +7,46 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(haven) #чтение .dta файлов
+library(kdensity) #ядерное сглаживание
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+df <- read_dta(file = "schooling.dta")
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+kde_1 = kdensity(df$lwage76, kernel = "gaussian")
+plot(kde_1)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+m<-mean(df$lwage76)
+std<-sqrt(var(df$lwage76))
+plot(kde_1, col = 'red')
+curve(dnorm(x, mean=m, sd=std), 
+      col="darkblue", lwd=2, yaxt="n", add = TRUE)
+```
+
+```{r}
+plot(df$exp76, df$lwage76)
+plot(df$age76, df$lwage76)
+```
+
+```{r}
+lin_m1 <- lm(lwage76 ~ exp76, data = df)
+summary(lin_m1)
+
+lin_m2 <- lm(lwage76 ~ age76, data = df)
+summary(lin_m2)
+```
+
+### Ядро полиномиальное, но отличается от исходного файла
+Результат отличается от stata.
+```{r}
+lpoly_1 <- lm(lwage76 ~ poly(exp76,3), data = df)
+plot(df$exp76, df$lwage76)
+lines(predict(lpoly_1))
+```
+
+

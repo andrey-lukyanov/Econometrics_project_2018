@@ -1,0 +1,44 @@
+---
+title: "Seminar 27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(haven) #чтение .dta файлов
+library(car) #Wald test
+library(lmtest) #LR test 
+
+df <- read_dta(file = "weco.dta")
+```
+
+```{r}
+df$lex2 <- df$lex^2
+lin_m1 <- lm(y ~ male + dex + lex + lex2, data = df)
+```
+
+## Значения F-статистик отличаются от stata
+```{r}
+linearHypothesis(lin_m1, c("lex = 0", "lex2 = 0"))
+linearHypothesis(lin_m1, "lex2 = 0")
+```
+
+## LR test
+```{r}
+lin_m2 <- lm(y ~ male + dex, data = df)
+lrtest(lin_m1 ,lin_m2)
+```
+
+## Chow Test
+```{r}
+df_1 <- filter(df, df$bedrooms < 3)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
+y_1 <- filter(df, df$bedrooms < 3)[, c("lnprice")]
+df_2 <- filter(df, df$bedrooms > 2)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
+y_2 <- filter(df, df$bedrooms > 2)[, c("lnprice")]
+chow.test(y_1,df_1,y_2,df_2)
+```
+
+
