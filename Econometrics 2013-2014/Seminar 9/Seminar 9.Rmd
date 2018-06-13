@@ -18,13 +18,13 @@ df <- read_dta(file = "daily-data-crsp.dta")
 ```
 
 ```{r}
-lin_m <- lm(df$ibm ~ df$crsp)
+lin_m <- lm(ibm ~ crsp, data = df)
 summary(lin_m)
 ```
 
 ## Durbin-Watson d statistic to test for first-order serial correlation
 ```{r}
-dwtest(df$ibm ~ df$crsp)
+dwtest(ibm ~ crsp, data = df)
 ```
 
 ## Test for ARCH effects in the residuals???
@@ -34,7 +34,7 @@ dwtest(df$ibm ~ df$crsp)
 
 ## Breusch-Godfrey test for higher-order serial correlation
 ```{r}
-bgtest(df$ibm ~ df$crsp, order = 7)
+bgtest(ibm ~ crsp, order = 7, data = df)
 ```
 
 ## Regression with Newey-West standard errors, bandwidth [4(n/100)^{1/3}] ~ Andrews (1991)
@@ -42,3 +42,30 @@ bgtest(df$ibm ~ df$crsp, order = 7)
 coeftest(lin_m, vcov=NeweyWest(lin_m, lag = 11))
 ```
 
+## Stata
+```{r}
+library(devtools)
+devtools::install_github("Hemken/Statamarkdown")
+```
+
+Setting up Stata.
+```{r, echo=FALSE, message=FALSE}
+library(Statamarkdown)
+stataexe <- find_stata()
+knitr::opts_chunk$set(engine.path=stataexe)
+```
+
+```{stata}
+tsset n
+reg ibm crsp
+*Durbin-Watson d statistic to test for first-order serial correlation
+estat dwatson  
+*Test for ARCH effects in the residuals
+estat archlm, lags(1)  
+*Breusch-Godfrey test for higher-order serial correlation         
+estat bgodfrey, lags(7)
+
+*Regression with Newey-West standard errors, bandwidth [4(n/100)^{1/3}] ~ Andrews (1991)
+newey ibm crsp, lag(11)
+vce
+```
