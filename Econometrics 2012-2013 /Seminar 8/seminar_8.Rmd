@@ -1,0 +1,165 @@
+---
+title: "seminar_8"
+output: html_document
+---
+
+Загружаем нужные библиотеки и фаил с данными
+
+```{r setup, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(foreign)
+library(lmtest)
+library(car)
+library(ggplot2)
+library(SimDesign)
+library(plsdof)
+housing <- read.dta(file = '~/Desktop/housing.dta')
+```
+
+# Часть 1
+
+Построим регрессию цены продажи дома на все остальные регрессоры
+```{r, comment= ""}
+model_1 <- lm(data = housing, price ~. )
+summary(model_1)
+```
+
+Проведем RESET test Рамсея
+```{r, comment= ""}
+resettest(model_1)
+```
+
+Создадим переменную логарифм цены и построим с ней регрессию
+
+```{r, comment= ""}
+lnprice <- log(housing$price)
+housing$lnprice <- lnprice
+model_log <- lm(data = housing, lnprice ~ . - price)
+summary(model_log)
+```
+
+Создадим нужные нам переменные
+```{r, comment= ""}
+mean_lnprice <- mean(lnprice)
+price_new <- housing$price/exp(mean_lnprice)
+lnprice_new <- log(price_new)
+housing$price_new <- price_new
+housing$lnprice_new <- lnprice_new
+```
+
+Выберем лучшую функциональную форму модели
+```{r, comment= ""}
+model_2 <- lm(data = housing, price_new ~ . - price - lnprice - lnprice_new )
+rss1 <- sum(resid(model_2)^2)
+
+model_3 <- lm(data = housing, lnprice_new ~ . - price - lnprice - price_new )
+rss2 <- sum(resid(model_3)^2)
+n <- nrow(housing)
+
+chi2 <- (n/2)*abs(log(rss1/rss2))
+pvalue  <- pchisq(chi2, df=1, lower.tail=FALSE)
+chi2
+pvalue
+```
+
+Используем модель в логарифмах для построения прогноза
+```{r, comment= ""}
+residual <- model_log$residuals
+lnprice_hat <- predict(model_log)
+housing$lnprice_hat <- lnprice_hat
+```
+
+Построим график остатков в зависимости от прогноза
+```{r, comment= ""}
+p1 <- ggplot(data = housing, aes(x = lnprice_hat, y = residual)) + geom_point(alpha = 0.6, colour = 'blue')
+p1
+```
+
+Теперь посчитаем vif'ы для нашей модели
+```{r, comment= ""}
+vif(model_log)
+```
+
+# Часть 2
+
+Сгенерируем три независимые нормально распределенные случайные величины и построим их графики
+```{r, comment= ""}
+M <- c(2,6,8)
+C <- matrix(c(10,7,5,7,6,4,5,4,2.73), nrow = 3, ncol = 3, byrow = TRUE)
+set.seed(50)
+X <- rmvnorm(n = 50, mean = M, sigma = C )
+x1 <- X[,1]
+x2 <- X[,2]
+x3 <- X[,3]
+pl1 <- ggplot(data = as.data.frame(X) , aes(x = V2, y = V1)) + geom_point(alpha = 0.6, colour= 'blue') + xlab('x2') + ylab('x1')
+pl2 <-  ggplot(data = as.data.frame(X) , aes(x = V3, y = V1)) + geom_point(alpha = 0.6, colour= 'red') + xlab('x3') + ylab('x1')
+pl3 <-  ggplot(data = as.data.frame(X) , aes(x = V3, y = V2)) + geom_point(alpha = 0.6, colour= 'green') + xlab('x3') + ylab('x2')
+pl1
+pl2
+pl3
+```
+
+Сгенерируем epsilion и построим его графики
+
+```{r, comment = ''}
+set.seed(50)
+epsilon <- rnorm(n = 50)
+hist(epsilon)
+plot(density(epsilon))
+```
+
+Создадим переменную y 
+```{r, comment = ''}
+y <- -5+3*x1-8*x2+ 2*x3+epsilon
+summary(y)
+summary(x1)
+summary(x2)
+summary(x3)
+```
+
+
+Построим корреляционную матрицу
+```{r, comment = ''}
+df <- data.frame(y,x1,x2,x3)
+cor(df)
+```
+
+Построим нужные нам регрессии и выведем результат
+```{r, comment = ''}
+m1 <- lm(data = df, y ~. )
+summary(m1)
+m2 <- lm(data = df, y ~ x1 + x2)
+summary(m2)
+m3 <- lm(data = df, y ~ x1 + x3)
+summary(m3)
+m4 <- lm(data = df, y ~ x2 + x3)
+summary(m4)
+```
+
+Посчитаем vif'ы
+```{r, comment =''}
+vif(m1)
+
+```
+
+
+Построим корреляционную матрицу регрессоров
+```{r, comment=''}
+cor(X)
+
+```
+
+Посчитаем eigenvalues и применим PCA
+```{r, comment=''}
+XX <- t(X) %*% X
+ev <- eigen(XX)
+ev$vectors
+ev$values
+x.pca <- prcomp(X,  center = TRUE, scale. = TRUE)
+model_pcr <- pcr(y = y, X = X)
+model_pcr$coefficients
+model_pcr$intercept
+
+```
+
+
