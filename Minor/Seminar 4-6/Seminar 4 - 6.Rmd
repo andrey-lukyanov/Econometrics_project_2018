@@ -2,13 +2,24 @@
 title: "Seminar 4 - 6"
 output: html_document
 ---
+<!-- Цвета для кусков кода -->
+<style>
+pre.r {
+    background-color: #81BEF7 !important;
+}
+pre.stata {
+    background-color: #BDBDBD !important;
+}
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# R
-Reading Dataset.
+```{stata, eval=FALSE}
+# use data housing.dta*/
+```
+
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
 library(haven) #чтение .dta файлов
@@ -17,32 +28,56 @@ library(gap) #Chow test
 df <- read_dta(file = "housing.dta")
 ```
 
-## 2
+## 2.
+```{stata, eval=FALSE}
+reg  price lotsize bedrooms bathrms airco driveway recroom fullbase gashw stories garagepl prefarea
+```
+
 ```{r}
 lin_m1 <- lm(price ~ lotsize + bedrooms + bathrms + airco + driveway + recroom + fullbase + gashw + stories + garagepl + prefarea, data = df
 )
 summary(lin_m1)
 ```
 
-## 3
+## 3.
+```{stata, eval=FALSE}
+gen lnprice=ln(price)
+reg  lnprice lotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
+
+gen lnlotsize=ln(lotsize)
+reg  lnprice lnlotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
+```
+
 ```{r}
-df$lnprice <- log(df$price)
+df <- mutate(df, lnprice = log(price))
 lin_m2 <- lm(lnprice ~ lotsize + bedrooms + bathrms + airco + driveway + recroom + fullbase + gashw + stories + garagepl + prefarea, data =df
 )
 summary(lin_m2)
 
-df$lnlotsize <- log(df$lotsize)
+df <- mutate(df, lnlotsize = log(lotsize))
 lin_m3 <- lm(lnprice ~ lnlotsize + bedrooms + bathrms + airco + driveway + recroom + fullbase + gashw + stories + garagepl + prefarea, data = df
 )
 summary(lin_m3)
 ```
 
-## 4
+## 4.
+```{stata, eval=FALSE}
+	sum lnprice 
+	gen mean_lnprice=r(mean)
+	gen price_new=price/exp(mean_lnprice)
+	gen lnprice_new=ln(price_new)
+```
+
 ```{r}
-summary(log(df$price))
+summary(df$lnprice)
 mean_lnprice <- mean(log(df$price))
-df$price_new <- df$price/exp(mean_lnprice)
-df$lnprice_new <- log(df$price_new)
+df <- mutate(df, price_new = price/exp(mean_lnprice),
+             lnprice_new = log(price_new))
+```
+
+```{stata, eval=FALSE}
+reg  price_new lotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
+scalar rss1=e(rss)
 ```
 
 ```{r}
@@ -51,109 +86,41 @@ summary(lin_m4)
 rss1 <- sum(resid(lin_m4)^2)
 ```
 
+```{stata, eval=FALSE}
+reg  lnprice_new lotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
+scalar rss2=e(rss)
+scalar N=e(N)
+```
+
 ```{r}
 lin_m5 <- lm(lnprice_new ~ lotsize + bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea, data = df)
 summary(lin_m5)
 rss2 <- sum(resid(lin_m5)^2)
+n <- nobs(lin_m5)
 ```
 
-### Добавить нормальный print
-```{r}
-n <- nobs(lin_m5)
+```{stata, eval=FALSE}
+scalar chi2=(N/2)*abs(ln(rss1/rss2))
+scalar pvalue=chi2tail(1,chi2)
+scalar list chi2 pvalue rss1 rss2
+```
+
+```{r, results='asis'}
 chi2 <- n / 2 * abs(log(rss1/rss2))
 p_value <- pchisq(chi2, df=1, lower.tail=FALSE)
-p_value
+
+# Добавить нормальный print
+cat("chi2 =", chi2)
+cat("\n")
+cat("p_value =", p_value)
+cat("\n")
+cat("rss1 =", rss1)
+cat("\n")
+cat("rss2 =", rss2)
 ```
 
-## 5
-```{r}
-df$bedrooms2 <- 1L * (df$bedrooms < 3)
-df$bedrooms3 <- 1L * (df$bedrooms == 3)
-df$bedrooms4 <- 1L * (df$bedrooms == 4)
-df$bedrooms5 <- 1L * (df$bedrooms > 4)
-```
-
-```{r}
-lin_m6 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4, data = df)
-summary(lin_m6)
-```
-
-## 6
-```{r}
-lin_m7 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4 + bedrooms5, data = df)
-summary(lin_m7)
-```
-
-```{r}
-lin_m8 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4 + bedrooms5 - 1, data = df)
-summary(lin_m8)
-```
-
-## Chow test
-```{r}
-df_1 <- filter(df, df$bedrooms < 3)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
-y_1 <- filter(df, df$bedrooms < 3)[, c("lnprice")]
-df_2 <- filter(df, df$bedrooms > 2)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
-y_2 <- filter(df, df$bedrooms > 2)[, c("lnprice")]
-chow.test(y_1,df_1,y_2,df_2)
-```
-
-## Stata
-```{r}
-library(devtools)
-devtools::install_github("Hemken/Statamarkdown")
-```
-
-Setting up Stata.
-```{r, echo=FALSE, message=FALSE}
-library(Statamarkdown)
-stataexe <- find_stata()
-knitr::opts_chunk$set(engine.path=stataexe)
-```
-
-### Возникла проблема с кодировкой в исходном do-файле
-```{stata}
-#Возникла проблема с кодировкой в исходном do-файле
-#use housing.dta
-**2**
-
-reg  price lotsize bedrooms bathrms airco driveway recroom fullbase gashw stories garagepl prefarea
-
-**3**
-
-
-/*—ÓÁ‰‡ÌËÂ ÎÓ„‡ËÙÏ‡ ÔÂÂÏÂÌÌÓÈ price*/
-	gen lnprice=ln(price)
-
-/*ŒˆÂÌË‚‡ÌËÂ Â„ÂÒÒËË Ò ÎÓ„‡ËÙÏÓÏ ˆÂÌ˚*/
-	reg  lnprice lotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
-
-	gen lnlotsize=ln(lotsize)
-	reg  lnprice lnlotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
-
-**4**
-	
-/*œÂÓ·‡ÁÓ‚‡ÌËÂ «‡ÂÏ·ÍË*/
-
-	sum lnprice 
-	gen mean_lnprice=r(mean)
-	gen price_new=price/exp(mean_lnprice)
-	gen lnprice_new=ln(price_new)
-
-/*“ÂÒÚ ¡ÓÍÒ‡- ÓÍÒ‡*/
-	reg  price_new lotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
-	scalar rss1=e(rss)
-
-	reg  lnprice_new lotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
-	scalar rss2=e(rss)
-	scalar N=e(N)
-
-	scalar chi2=(N/2)*abs(ln(rss1/rss2))
-	scalar pvalue=chi2tail(1,chi2)
-	scalar list chi2 pvalue rss1 rss2
-
-**5**
-
+## 5.
+```{stata, eval=FALSE}
 gen bedrooms2=0
 replace bedrooms2=1 if bedrooms<3
 
@@ -165,35 +132,51 @@ replace bedrooms4=1 if bedrooms==4
 
 gen bedrooms5=0
 replace bedrooms5=1 if bedrooms>4
+```
 
+```{r}
+df <- mutate(df, bedrooms2 = 1L * (df$bedrooms < 3),
+             bedrooms3 = 1L * (df$bedrooms == 3),
+             bedrooms4 = 1L * (df$bedrooms == 4),
+             bedrooms5 = 1L * (df$bedrooms > 4))
+```
 
+```{r}
+lin_m6 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4, data = df)
+summary(lin_m6)
+```
 
-reg  lnprice lnlotsize bathrms stories driveway recroom fullbase gashw airco garagepl prefarea bedrooms2 bedrooms3 bedrooms4
-
-**6**
+## 6.
+```{stata, eval=FALSE}
 reg  lnprice lnlotsize  bathrms stories driveway recroom fullbase gashw airco garagepl prefarea bedrooms2 bedrooms3 bedrooms4 bedrooms5
+```
 
-*another way
-xi: reg  lnprice lnlotsize i.bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea 
+```{r}
+lin_m7 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4 + bedrooms5, data = df)
+summary(lin_m7)
+```
 
-*Without constant
+```{stata, eval=FALSE}
 reg  lnprice lnlotsize bathrms stories driveway recroom fullbase gashw airco garagepl prefarea bedrooms2 bedrooms3 bedrooms4 bedrooms5, noc
+```
 
-**7-11 see previous seminar
+```{r}
+lin_m8 <- lm(lnprice ~ lnlotsize + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea + bedrooms2 + bedrooms3 + bedrooms4 + bedrooms5 - 1, data = df)
+summary(lin_m8)
+```
 
-**13**
-
-*Chow test
-	
-	reg  lnprice lnlotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
+## 13.
+### Chow test
+```{stata, eval=FALSE}
+reg  lnprice lnlotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea
 scalar r_all=e(rss)
 scalar n_all=e(N)
 
-	reg  lnprice lnlotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea if bedrooms<3
+reg  lnprice lnlotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea if bedrooms<3
 scalar r_1=e(rss)
 scalar n_1=e(N)
 
-	reg  lnprice lnlotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea if bedrooms>2
+reg  lnprice lnlotsize bedrooms bathrms stories driveway recroom fullbase gashw airco garagepl prefarea if bedrooms>2
 scalar r_2=e(rss)
 scalar n_2=e(N)
 
@@ -202,19 +185,20 @@ scalar r_tot=r_1+r_2
 scalar F1=((r_all-r_tot)/(12))/(r_tot/ddf)
 scalar pval1=Ftail(12,ddf,F1)
 scalar list ddf F1 pval1
+```
 
-***Another variant
+```{r}
+df_1 <- filter(df, df$bedrooms < 3)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
+y_1 <- filter(df, df$bedrooms < 3)[, c("lnprice")]
+df_2 <- filter(df, df$bedrooms > 2)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
+y_2 <- filter(df, df$bedrooms > 2)[, c("lnprice")]
+chow.test(y_1,df_1,y_2,df_2)
+```
 
-for var lnlotsize bedrooms bathrms stories driveway ///
-recroom fullbase gashw airco garagepl prefarea: gen X_bedrooms2=X*bedrooms2
-
-reg lnprice lnlotsize bedrooms bathrms stories driveway recroom ///
-fullbase gashw airco garagepl prefarea *bedrooms2
-
-testparm *bedrooms2
-	
-log close
-
-*clear
-*exit
+```{r}
+library(lmtest)
+#не сходится с верхним тестом
+model_r <- lm(data = df, lnlotsize ~ bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea)
+model_ur <- lm(data = df, lnlotsize ~ (bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea)*(df$bedrooms < 3))
+waldtest(model_r, model_ur)
 ```
