@@ -23,12 +23,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
-library(haven) #чтение .dta файлов
+library(rio) # для чтения .dta файлов
 library(kdensity) #ядерное сглаживание
 library(scales) #отображение нескольких графиков на одном.
 library(tsoutliers) #тест на нормальность
 
-df <- read_dta(file = "housing.dta")
+df <- import(file = "housing.dta")
 ```
 
 
