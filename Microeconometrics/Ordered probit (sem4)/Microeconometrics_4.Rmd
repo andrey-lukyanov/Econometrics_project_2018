@@ -1,0 +1,37 @@
+---
+output: html_document
+---
+## R
+Reading dataset
+
+```{r}
+library(dplyr)
+library(knitr)
+library(haven) # Чтение dta файлов
+library(rmarkdown)
+library(gmodels)
+df <- read_dta(file = "tradrole.dta")
+```
+Выведем summary по переменным
+```{r}
+summary(df) # Summary по всему датасету
+with(df, CrossTable(tradrole, missing.include = TRUE, format = "SPSS")) # Tab (Stata) по tradrole
+with(df, CrossTable(so, urb, missing.include = TRUE, format = "SPSS")) # Tab (Stata) по so и urb
+```
+Ordered probit model
+```{r}
+library(MASS)
+oprobit <- polr(as.factor(tradrole) ~ as.ordered(age) + as.factor(cath) + as.factor(fpro) + as.ordered(adjinc) + as.ordered(meduc) + as.factor(mw14) + as.factor(nonint) + as.ordered(nsibs) + as.factor(so) + as.factor(urb), data = df, method="probit", na.action = na.omit, Hess=TRUE)
+summary(oprobit)
+pred1 <- predict(oprobit, data=df, type="p")
+```
+```{r}
+oprobit2 <- polr(as.factor(tradrole) ~ as.ordered(age**2) + as.factor(cath) + as.factor(fpro) + as.ordered(adjinc) + as.ordered(meduc) + as.factor(mw14) + as.factor(nonint) + as.ordered(nsibs) + as.factor(so) + as.factor(urb), data = df, method="probit", na.action = na.omit, Hess=TRUE)
+summary(oprobit2)
+pred2 <- predict(oprobit2, data=df, type="p")
+```
+
+
+
+
+
