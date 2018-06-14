@@ -2,14 +2,25 @@
 title: "Seminar 3"
 output: html_document
 ---
+<!-- Цвета для кусков кода -->
+<style>
+pre.r {
+    background-color: #81BEF7 !important;
+}
+pre.stata {
+    background-color: #BDBDBD !important;
+}
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R
+# 1.
+```{stata, eval=FALSE}
+# use data housing.dta*/
+```
 
-Reading Dataset.
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
 library(haven) #чтение .dta файлов
@@ -18,132 +29,145 @@ library(scales) #отображение нескольких графиков н
 library(tsoutliers) #тест на нормальность
 
 df <- read_dta(file = "housing.dta")
-#attach(data)
 ```
 
-## 2
-Summary.
+
+## 2.
+```{stata, eval=FALSE}
+sum
+```
+
 ```{r}
 summary(df)
 ```
 
-## 3
-```{r}
-ggplot(data=df, aes(x=lotsize, y=price)) + geom_point() + geom_smooth(method='lm')
+## 3.
+```{stata, eval=FALSE}
+twoway dot price lotsize || lfit price lotsize
 ```
 
 ```{r}
-ggplot(data=df, aes(x=bedrooms, y=price)) + geom_point() + geom_smooth(method='lm')
+ggplot(data=df, aes(x=lotsize, y=price)) + geom_point() + geom_smooth(method='lm') + labs(x = "Lotsize", y = "Price")
+```
+```{stata, eval=FALSE}
+twoway dot price bedrooms || lfit price bedrooms
 ```
 
 ```{r}
-ggplot(data=df, aes(x=bathrms, y=price)) + geom_point() + geom_smooth(method='lm')
+ggplot(data=df, aes(x=bedrooms, y=price)) + geom_point() + geom_smooth(method='lm') + labs(x = "Bedrooms", y = "Price")
+```
+```{stata, eval=FALSE}
+twoway scatter price bathrms || lfit  price bathrms
 ```
 
 ```{r}
-omit_4 <- filter(df, df$bathrms != 4)
-ggplot(data=omit_4, aes(x=bathrms, y=price)) + geom_point() + geom_smooth(method='lm')
+ggplot(data=df, aes(x=bathrms, y=price)) + geom_point() + geom_smooth(method='lm') + labs(x = "Bathrooms", y = "Price")
+```
+```{stata, eval=FALSE}
+twoway dot price bathrms if bathrms!=4 || lfit  price bathrms if bathrms!=4
 ```
 
 ```{r}
-ggplot(data=df, aes(x=bedrooms, y=price)) + geom_point() + geom_smooth(method='lm')
+ggplot(data=filter(df, df$bathrms != 4), aes(x=bathrms, y=price)) + geom_point() + geom_smooth(method='lm') + labs(x = "Bathrooms", y = "Price")
+```
+```{stata, eval=FALSE}
+twoway dot price bedrooms || dot  price bathrms
 ```
 
-## 4
 ```{r}
+ggplot(data=df, aes(x=bedrooms, y=price)) + geom_point() + geom_smooth(method='lm') + labs(x = "Bedrooms", y = "Price")
+```
+
+## 4.
+```{stata, eval=FALSE}
+hist price, norm
+```
+
+```{r, message=FALSE}
 m<-mean(df$price)
 std<-sqrt(var(df$price))
-ggplot(data=df, aes(x = price)) + geom_histogram(aes(y=..density..)) + stat_function(fun = dnorm, args = list(mean = m, sd = std))
+ggplot(data=df, aes(x = price)) + geom_histogram(aes(y=..density..)) + stat_function(fun = dnorm, args = list(mean = m, sd = std)) + labs(x = "Price", y = "Density")
 ```
 
-### Не kdensity из стата, но похоже.
-```{r}
-ggplot(data=df, aes(x = price)) + geom_histogram(aes(y=..density..)) + geom_density()
+```{stata, eval=FALSE}
+twoway hist price ||kdensity  price
 ```
 
-## 5
+```{r, message=FALSE}
+# Не kdensity из стата, но похоже.
+ggplot(data=df, aes(x = price)) + geom_histogram(aes(y=..density..)) + geom_density() + labs(x = "Price", y = "Density")
+```
+
+## 5.
+```{stata, eval=FALSE}
+reg price lotsize bedrooms bathrms airco
+```
+
 ```{r}
 lin_m6 <- lm(df$price ~ df$lotsize + df$bedrooms + df$bathrms + df$airco)
-df$resid <- resid(lin_m6)
-ggplot(df, aes(x = price, y = resid)) + geom_point()
 ```
 
-## 7
-```{r}
-df$price_hat <- predict(lin_m6)
-ggplot(df, aes(x = price, y = price_hat)) + geom_point()  + geom_abline(slope = 1, color = "red")
-```
-
-```{r}
-m<-mean(resid)
-std<-sqrt(var(resid))
-#hist(resid, density=40, breaks=40, prob=TRUE, 
-#     xlab="Residuals",
-#     main='')
-#curve(dnorm(x, mean=m, sd=std), 
-#      col="darkblue", lwd=2, add=TRUE, yaxt="n")
-#
-ggplot(data=df, aes(x = resid)) + geom_histogram(aes(y=..density..)) + stat_function(fun = dnorm, args = list(mean = m, sd = std))
-```
-
-## 8
-### Отличается от sktest в stata
-```{r}
-
-tseries::jarque.bera.test(resid)
-```
-
-```{r}
-shapiro.test(resid)
-```
-
-## Stata
-```{r}
-library(devtools)
-devtools::install_github("Hemken/Statamarkdown")
-```
-
-Setting up Stata.
-```{r, echo=FALSE, message=FALSE}
-library(Statamarkdown)
-stataexe <- find_stata()
-knitr::opts_chunk$set(engine.path=stataexe)
-```
-
-```{stata}
-
-/*1 use data housing.dta*/
-
-/*2*/
-sum
-
-/*3*/
-twoway dot price lotsize || lfit price lotsize
-twoway dot price bedrooms || lfit price bedrooms
-twoway scatter price bathrms || lfit  price bathrms
-twoway dot price bathrms if bathrms!=4 || lfit  price bathrms if bathrms!=4
-twoway dot price bedrooms || dot  price bathrms 
-
-/*4*/
-hist price, norm
-twoway hist price ||kdensity  price
-
-/*5*/
-reg price lotsize bedrooms bathrms airco
-
-/*7*/
-
+## 7.
+```{stata, eval=FALSE}
 predict resid_a, resid
 predict price_hat, xb
 
 gen n=_n
+```
+
+```{r}
+df <- mutate(df, resid_a = resid(lin_m6), 
+             price_hat = predict(lin_m6), 
+             n = seq(dim(df)[1]))
+```
+
+```{stata, eval=FALSE}
 twoway scatter resid_a n
+```
+
+```{r}
+ggplot(df, aes(x = n, y = resid_a)) + geom_point() + labs(x = "n", y = "Residuals")
+```
+
+```{stata, eval=FALSE}
 twoway scatter resid_a price
+```
+
+```{r}
+ggplot(df, aes(x = price, y = resid_a)) + geom_point() + labs(x = "Price", y = "Residuals")
+```
+```{stata, eval=FALSE}
 twoway dot price_hat price || line price price
+```
 
-/*8*/
+```{r}
+ggplot(df, aes(x = price, y = price_hat)) + geom_point()  + geom_abline(slope = 1, color = "red") + labs(x = "Price", y = "Residuals")
+```
 
+```{stata, eval=FALSE}
 hist resid_a, norm
+```
+
+```{r, message=FALSE}
+m<-mean(df$resid_a)
+std<-sqrt(var(df$resid_a))
+ggplot(data=df, aes(x = resid_a)) + geom_histogram(aes(y=..density..)) + stat_function(fun = dnorm, args = list(mean = m, sd = std))
+```
+
+## 8.
+```{stata, eval=FALSE}
 sktest resid_a
+```
+
+```{r}
+# Отличается от sktest в stata
+tseries::jarque.bera.test(df$resid_a)
+```
+
+```{stata, eval=FALSE}
 swilk resid_a
+```
+
+```{r}
+shapiro.test(df$resid_a)
 ```
