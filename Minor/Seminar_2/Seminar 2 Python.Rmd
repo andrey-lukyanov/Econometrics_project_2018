@@ -1,0 +1,71 @@
+---
+title: "Seminar 2 Python"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Python
+```{r}
+library(reticulate)
+use_python("/Users/andrey_lukyanov/anaconda/bin/python3.6")
+```
+
+Reading Dataset.
+```{python}
+import pandas as pd
+data = pd.read_stata("Seminar2.dta")
+```
+
+Renaming.
+```{python}
+data.rename(columns={'A': 'n', 'B': 'date'}, inplace=True)
+```
+
+Generate variables.
+```{python}
+data['y_delta'] = data['DELTA'] - data['RKFREE']
+```
+
+Dropping NaNs.
+```{python}
+data.dropna(how='any', inplace = True)
+```
+
+Generating X.
+```{python}
+x = data['MARKET'] - data['RKFREE']
+```
+
+Regression.
+```{python}
+from statsmodels.regression.linear_model import OLS
+import statsmodels as sm
+model_ols = OLS(data['y_delta'], x, hasconst=1).fit()
+print(model_ols.summary())
+```
+
+Loop.
+```{python}
+names = ["BOISE", "CITCRP", "CONED", "CONTIL", "DATGEN", "DEC", "GENMIL", "GERBER", "IBM", "MOTOR", "PANAM", "PSNH", "TANDY", "TEXACO", "WEYER"]
+
+for i in names:
+  data['y_' + str(i)] = data[i] - data['RKFREE']
+
+y_names = ["y_BOISE", "y_CITCRP", "y_CONED", "y_CONTIL", "y_DATGEN", "y_DEC", "y_GENMIL", "y_GERBER", "y_IBM", "y_MOTOR", "y_PANAM", "y_PSNH", "y_TANDY", "y_TEXACO", "y_WEYER"]
+
+x = sm.tools.tools.add_constant(x)
+x.columns = ['const', 'x']
+
+for i in y_names:
+  olsreg = OLS(data[i], x).fit()
+  print(olsreg.summary())
+```
+
+Testing hypothesis.
+```{python}
+hypothesis = "(x = 1)"
+print(olsreg.f_test(hypothesis))
+```

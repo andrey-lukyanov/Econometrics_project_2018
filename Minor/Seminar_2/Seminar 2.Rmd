@@ -3,185 +3,91 @@ title: "Seminar 2"
 output: html_document
 ---
 
-## R
+<!-- Цвета для кусков кода -->
+<style>
+pre.r {
+    background-color: #81BEF7 !important;
+}
+pre.stata {
+    background-color: #BDBDBD !important;
+}
+</style>
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Reading Dataset.
-```{r, results='hide', message=FALSE, warning=FALSE}
-library(tidyverse)
-library(haven) # для чтения .dta файлов
-library(car) # для линейных гипотез
-
-data <- read_dta(file = "Seminar2.dta")
+```{stata, eval=FALSE}
+# use Seminar2.dta
+ren A n
+ren B date
 ```
 
-Renaming.
-```{r, results='hide'}
-rename(data, n = A,
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(rio) # для чтения .dta файлов
+library(car) # для линейных гипотез
+
+df <- import(file = "Seminar2.dta")
+
+rename(df, n = A,
        date = B)
 ```
 
-Generate variables.
-```{r}
-data$y_delta <- data$DELTA - data$RKFREE
-```
-
-Dropping NaNs.
-```{r}
-data <- na.omit(data)
-```
-
-Generating X.
-```{r}
-data$x <- data$MARKET - data$RKFREE
-```
-
-Regression.
-```{r}
-olsreg <- lm(y_delta ~ x, data = data)
-summary(olsreg)
-```
-
-Loop.
-```{r}
-names = list("BOISE", "CITCRP", "CONED", "CONTIL", "DATGEN", "DEC", "GENMIL", "GERBER", "IBM", "MOTOR", "PANAM", "PSNH", "TANDY", "TEXACO", "WEYER")
-
-for(i in names){
-  data[[paste('y',i ,sep = '_')]] <- data[[i]] - data$RKFREE
-}
-
-y_names = list("y_BOISE", "y_CITCRP", "y_CONED", "y_CONTIL", "y_DATGEN", "y_DEC", "y_GENMIL", "y_GERBER", "y_IBM", "y_MOTOR", "y_PANAM", "y_PSNH", "y_TANDY", "y_TEXACO", "y_WEYER")
-
-for(i in y_names){
-  olsreg <- lm(data[[i]] ~ data$x)
-  print(summary(olsreg))
-}
-```
-
-Testing hypothesis.
-```{r}
-linearHypothesis(olsreg, "data$x = 1") 
-```
-
-## Python
-```{r}
-library(reticulate)
-use_python("/Users/andrey_lukyanov/anaconda/bin/python3.6")
-```
-
-Reading Dataset.
-```{python}
-import pandas as pd
-data = pd.read_stata("Seminar2.dta")
-```
-
-Renaming.
-```{python}
-data.rename(columns={'A': 'n', 'B': 'date'}, inplace=True)
-```
-
-Generate variables.
-```{python}
-data['y_delta'] = data['DELTA'] - data['RKFREE']
-```
-
-Dropping NaNs.
-```{python}
-data.dropna(how='any', inplace = True)
-```
-
-Generating X.
-```{python}
-x = data['MARKET'] - data['RKFREE']
-```
-
-Regression.
-```{python}
-from statsmodels.regression.linear_model import OLS
-import statsmodels as sm
-model_ols = OLS(data['y_delta'], x, hasconst=1).fit()
-print(model_ols.summary())
-```
-
-Loop.
-```{python}
-names = ["BOISE", "CITCRP", "CONED", "CONTIL", "DATGEN", "DEC", "GENMIL", "GERBER", "IBM", "MOTOR", "PANAM", "PSNH", "TANDY", "TEXACO", "WEYER"]
-
-for i in names:
-  data['y_' + str(i)] = data[i] - data['RKFREE']
-
-y_names = ["y_BOISE", "y_CITCRP", "y_CONED", "y_CONTIL", "y_DATGEN", "y_DEC", "y_GENMIL", "y_GERBER", "y_IBM", "y_MOTOR", "y_PANAM", "y_PSNH", "y_TANDY", "y_TEXACO", "y_WEYER"]
-
-x = sm.tools.tools.add_constant(x)
-x.columns = ['const', 'x']
-
-for i in y_names:
-  olsreg = OLS(data[i], x).fit()
-  print(olsreg.summary())
-```
-
-Testing hypothesis.
-```{python}
-hypothesis = "(x = 1)"
-print(olsreg.f_test(hypothesis))
-```
-
-## Stata
-```{r}
-library(devtools)
-devtools::install_github("Hemken/Statamarkdown")
-```
-
-Setting up Stata.
-```{r, echo=FALSE, message=FALSE}
-library(Statamarkdown)
-stataexe <- find_stata()
-knitr::opts_chunk$set(engine.path=stataexe)
-```
-
-
-```{stata}
-#use Seminar2.dta
-
-/*Generate variables*/
+## Generate variables.
+```{stata, eval=FALSE}
 gen y_delta=DELTA-RKFREE
 
 drop if n==.
 
 gen x=MARKET-RKFREE
+```
 
-/*Regression*/
+```{r}
+df <- mutate(df, y_delta = DELTA - RKFREE, 
+       x = MARKET - RKFREE)
+df <- na.omit(df)
+```
+
+## Regression.
+```{stata, eval=FALSE}
 reg y_delta x
+```
 
-/*Loop*/
+```{r}
+olsreg <- lm(y_delta ~ x, data = df)
+summary(olsreg)
+```
 
+## Loop.
+```{stata, eval=FALSE}
 for var BOISE CITCRP CONED ///
 CONTIL DATGEN DEC GENMIL ///
 GERBER IBM MOTOR PANAM PSNH ///
 TANDY TEXACO WEYER: gen y_X=X-RKFREE
-
-/*Another approach*/
-
-/* foreach i of var  BOISE CITCRP CONED ///
-CONTIL DATGEN DEC GENMIL ///
-GERBER IBM MOTOR PANAM PSNH ///
-TANDY TEXACO WEYER {
-gen y_`i'=`i'-RKFREE 
-}
-*/
-
-
-foreach i of var  BOISE CITCRP CONED ///
-CONTIL DATGEN DEC GENMIL ///
-GERBER IBM MOTOR PANAM PSNH ///
-TANDY TEXACO WEYER {
-reg y_`i' x
-}
-
-/*Testing hypothesis*/
-
-test x=1
-
 ```
+
+```{r}
+names = list("BOISE", "CITCRP", "CONED", "CONTIL", "DATGEN", "DEC", "GENMIL", "GERBER", "IBM", "MOTOR", "PANAM", "PSNH", "TANDY", "TEXACO", "WEYER")
+
+for(i in names){
+  df[[paste('y',i ,sep = '_')]] <- df[[i]] - df$RKFREE
+}
+
+y_names = list("y_BOISE", "y_CITCRP", "y_CONED", "y_CONTIL", "y_DATGEN", "y_DEC", "y_GENMIL", "y_GERBER", "y_IBM", "y_MOTOR", "y_PANAM", "y_PSNH", "y_TANDY", "y_TEXACO", "y_WEYER")
+
+for(i in y_names){
+  olsreg <- lm(df[[i]] ~ df$x)
+  print(summary(olsreg))
+}
+```
+
+## Testing hypothesis.
+```{stata, eval=FALSE}
+test x=1
+```
+
+```{r}
+linearHypothesis(olsreg, "df$x = 1") 
+```
+

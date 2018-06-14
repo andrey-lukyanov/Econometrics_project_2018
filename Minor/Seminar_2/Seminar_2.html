@@ -307,61 +307,150 @@ $(document).ready(function () {
 </div>
 
 
-<div id="r." class="section level2">
-<h2>R.</h2>
-<p>Reading Dataset.</p>
+<!-- Цвета для кусков кода -->
+<style>
+pre.r {
+    background-color: #81BEF7 !important;
+}
+pre.stata {
+    background-color: #BDBDBD !important;
+}
+</style>
+<pre class="stata"><code># use Seminar2.dta
+ren A n
+ren B date</code></pre>
 <pre class="r"><code>library(tidyverse)
-library(haven)
-library(car)
+library(rio) # для чтения .dta файлов
+library(car) # для линейных гипотез
+library(sjPlot) # для отображения датафреймов
 
-data &lt;- read_dta(file = &quot;Seminar2.dta&quot;)</code></pre>
-<p>Renaming.</p>
-<pre class="r"><code>rename(data, n = A,
+df &lt;- import(file = &quot;Seminar2.dta&quot;)
+
+rename(df, n = A,
        date = B)</code></pre>
-<p>Generate variables.</p>
-<pre class="r"><code>data[['y_delta']] &lt;- data[['DELTA']] - data[['RKFREE']]</code></pre>
-<p>Dropping NaNs.</p>
-<pre class="r"><code>data &lt;- na.omit(data)
-attach(data)</code></pre>
-<p>Generating X.</p>
-<pre class="r"><code>x &lt;- MARKET - RKFREE</code></pre>
-<p>Regression.</p>
-<pre class="r"><code>olsreg &lt;- lm(y_delta ~ x)
-summary(olsreg)</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = y_delta ~ x)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -0.25567 -0.06651 -0.01032  0.06071  0.26052 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept) 0.001350   0.008283   0.163    0.871    
-## x           0.489736   0.120585   4.061 8.82e-05 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 0.09025 on 118 degrees of freedom
-## Multiple R-squared:  0.1226, Adjusted R-squared:  0.1152 
-## F-statistic: 16.49 on 1 and 118 DF,  p-value: 8.818e-05</code></pre>
-<p>Loop.</p>
+<div id="generate-variables." class="section level2">
+<h2>Generate variables.</h2>
+<pre class="stata"><code>gen y_delta=DELTA-RKFREE
+
+drop if n==.
+
+gen x=MARKET-RKFREE</code></pre>
+<pre class="r"><code>df &lt;- mutate(df, y_delta = DELTA - RKFREE, 
+       x = MARKET - RKFREE)
+df &lt;- na.omit(df)</code></pre>
+</div>
+<div id="regression." class="section level2">
+<h2>Regression.</h2>
+<pre class="stata"><code>reg y_delta x</code></pre>
+<pre class="r"><code>olsreg &lt;- lm(y_delta ~ x, data = df)
+sjt.lm(olsreg)</code></pre>
+<table style="border-collapse:collapse; border:none;border-bottom:double;">
+<td style="padding:0.2cm; border-top:double;">
+ 
+</td>
+<td style="border-bottom:1px solid; padding-left:0.5em; padding-right:0.5em; border-top:double;">
+ 
+</td>
+<td style="padding:0.2cm; text-align:center; border-bottom:1px solid; border-top:double;" colspan="3">
+y_delta
+</td>
+</tr>
+<tr>
+<td style="padding:0.2cm; font-style:italic;">
+ 
+</td>
+<td style="padding-left:0.5em; padding-right:0.5em; font-style:italic;">
+ 
+</td>
+<td style="padding:0.2cm; text-align:center; font-style:italic; ">
+B
+</td>
+<td style="padding:0.2cm; text-align:center; font-style:italic; ">
+CI
+</td>
+<td style="padding:0.2cm; text-align:center; font-style:italic; ">
+p
+</td>
+</tr>
+<tr>
+<td style="padding:0.2cm; border-top:1px solid; text-align:left;">
+(Intercept)
+</td>
+<td style="padding-left:0.5em; padding-right:0.5em; border-top:1px solid; ">
+ 
+</td>
+<td style="padding:0.2cm; text-align:center; border-top:1px solid; ">
+0.00
+</td>
+<td style="padding:0.2cm; text-align:center; border-top:1px solid; ">
+-0.02 – 0.02
+</td>
+<td style="padding:0.2cm; text-align:center; border-top:1px solid; ">
+.871
+</td>
+</tr>
+<tr>
+<td style="padding:0.2cm; text-align:left;">
+x
+</td>
+<td style="padding-left:0.5em; padding-right:0.5em;">
+ 
+</td>
+<td style="padding:0.2cm; text-align:center; ">
+0.49
+</td>
+<td style="padding:0.2cm; text-align:center; ">
+0.25 – 0.73
+</td>
+<td style="padding:0.2cm; text-align:center; ">
+&lt;.001
+</td>
+</tr>
+<tr>
+<td style="padding:0.2cm; padding-top:0.1cm; padding-bottom:0.1cm; text-align:left; border-top:1px solid;">
+Observations
+</td>
+<td style="padding-left:0.5em; padding-right:0.5em; border-top:1px solid;">
+ 
+</td>
+<td style="padding:0.2cm; padding-top:0.1cm; padding-bottom:0.1cm; text-align:center; border-top:1px solid;" colspan="3">
+120
+</td>
+</tr>
+<tr>
+<td style="padding:0.2cm; text-align:left; padding-top:0.1cm; padding-bottom:0.1cm;">
+R<sup>2</sup> / adj. R<sup>2</sup>
+</td>
+<td style="padding-left:0.5em; padding-right:0.5em;">
+ 
+</td>
+<td style="padding:0.2cm; text-align:center; padding-top:0.1cm; padding-bottom:0.1cm;" colspan="3">
+.123 / .115
+</td>
+</tr>
+</table>
+</div>
+<div id="loop." class="section level2">
+<h2>Loop.</h2>
+<pre class="stata"><code>for var BOISE CITCRP CONED ///
+CONTIL DATGEN DEC GENMIL ///
+GERBER IBM MOTOR PANAM PSNH ///
+TANDY TEXACO WEYER: gen y_X=X-RKFREE</code></pre>
 <pre class="r"><code>names = list(&quot;BOISE&quot;, &quot;CITCRP&quot;, &quot;CONED&quot;, &quot;CONTIL&quot;, &quot;DATGEN&quot;, &quot;DEC&quot;, &quot;GENMIL&quot;, &quot;GERBER&quot;, &quot;IBM&quot;, &quot;MOTOR&quot;, &quot;PANAM&quot;, &quot;PSNH&quot;, &quot;TANDY&quot;, &quot;TEXACO&quot;, &quot;WEYER&quot;)
 
 for(i in names){
-  data[[paste('y',i ,sep = '_')]] &lt;- data[[i]] - RKFREE
+  df[[paste('y',i ,sep = '_')]] &lt;- df[[i]] - df$RKFREE
 }
 
 y_names = list(&quot;y_BOISE&quot;, &quot;y_CITCRP&quot;, &quot;y_CONED&quot;, &quot;y_CONTIL&quot;, &quot;y_DATGEN&quot;, &quot;y_DEC&quot;, &quot;y_GENMIL&quot;, &quot;y_GERBER&quot;, &quot;y_IBM&quot;, &quot;y_MOTOR&quot;, &quot;y_PANAM&quot;, &quot;y_PSNH&quot;, &quot;y_TANDY&quot;, &quot;y_TEXACO&quot;, &quot;y_WEYER&quot;)
 
 for(i in y_names){
-  olsreg &lt;- lm(data[[i]] ~ x)
+  olsreg &lt;- lm(df[[i]] ~ df$x)
   print(summary(olsreg))
 }</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##       Min        1Q    Median        3Q       Max 
@@ -370,7 +459,7 @@ for(i in y_names){
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) 0.003142   0.006812   0.461    0.645    
-## x           0.935888   0.099161   9.438 4.29e-16 ***
+## df$x        0.935888   0.099161   9.438 4.29e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -380,7 +469,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##       Min        1Q    Median        3Q       Max 
@@ -389,7 +478,7 @@ for(i in y_names){
 ## Coefficients:
 ##              Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) 0.0002486  0.0061604   0.040    0.968    
-## x           0.6670095  0.0896803   7.438  1.8e-11 ***
+## df$x        0.6670095  0.0896803   7.438  1.8e-11 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -399,7 +488,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##       Min        1Q    Median        3Q       Max 
@@ -408,7 +497,7 @@ for(i in y_names){
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)  
 ## (Intercept) 0.011003   0.004589   2.398   0.0181 *
-## x           0.093194   0.066803   1.395   0.1656  
+## df$x        0.093194   0.066803   1.395   0.1656  
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -418,7 +507,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -427,7 +516,7 @@ for(i in y_names){
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) -0.01317    0.01308  -1.007   0.3162    
-## x            0.73109    0.19044   3.839   0.0002 ***
+## df$x         0.73109    0.19044   3.839   0.0002 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -437,7 +526,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -446,7 +535,7 @@ for(i in y_names){
 ## Coefficients:
 ##              Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) -0.006729   0.009810  -0.686    0.494    
-## x            1.030822   0.142807   7.218 5.54e-11 ***
+## df$x         1.030822   0.142807   7.218 5.54e-11 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -456,7 +545,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##       Min        1Q    Median        3Q       Max 
@@ -465,7 +554,7 @@ for(i in y_names){
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) 0.006850   0.007439   0.921    0.359    
-## x           0.847423   0.108301   7.825 2.41e-12 ***
+## df$x        0.847423   0.108301   7.825 2.41e-12 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -475,7 +564,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##       Min        1Q    Median        3Q       Max 
@@ -484,7 +573,7 @@ for(i in y_names){
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)   
 ## (Intercept) 0.007812   0.005752   1.358  0.17698   
-## x           0.270210   0.083728   3.227  0.00162 **
+## df$x        0.270210   0.083728   3.227  0.00162 **
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -494,7 +583,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -503,7 +592,7 @@ for(i in y_names){
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) 0.005087   0.007063   0.720    0.473    
-## x           0.625592   0.102823   6.084 1.49e-08 ***
+## df$x        0.625592   0.102823   6.084 1.49e-08 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -513,7 +602,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -522,7 +611,7 @@ for(i in y_names){
 ## Coefficients:
 ##               Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) -0.0004896  0.0046400  -0.106    0.916    
-## x            0.4568208  0.0675477   6.763 5.49e-10 ***
+## df$x         0.4568208  0.0675477   6.763 5.49e-10 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -532,7 +621,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##       Min        1Q    Median        3Q       Max 
@@ -541,7 +630,7 @@ for(i in y_names){
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) 0.005253   0.007200   0.730    0.467    
-## x           0.848150   0.104814   8.092 5.91e-13 ***
+## df$x        0.848150   0.104814   8.092 5.91e-13 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -551,7 +640,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -560,7 +649,7 @@ for(i in y_names){
 ## Coefficients:
 ##              Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) -0.008576   0.011248  -0.762    0.447    
-## x            0.734508   0.163739   4.486  1.7e-05 ***
+## df$x         0.734508   0.163739   4.486  1.7e-05 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -570,7 +659,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -579,7 +668,7 @@ for(i in y_names){
 ## Coefficients:
 ##              Estimate Std. Error t value Pr(&gt;|t|)
 ## (Intercept) -0.012582   0.009995  -1.259    0.211
-## x            0.213485   0.145498   1.467    0.145
+## df$x         0.213485   0.145498   1.467    0.145
 ## 
 ## Residual standard error: 0.1089 on 118 degrees of freedom
 ## Multiple R-squared:  0.01792,    Adjusted R-squared:  0.009595 
@@ -587,7 +676,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -596,7 +685,7 @@ for(i in y_names){
 ## Coefficients:
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) 0.010659   0.009698   1.099    0.274    
-## x           1.050001   0.141184   7.437  1.8e-11 ***
+## df$x        1.050001   0.141184   7.437  1.8e-11 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -606,7 +695,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -615,7 +704,7 @@ for(i in y_names){
 ## Coefficients:
 ##              Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) 0.0007166  0.0062448   0.115    0.909    
-## x           0.6132303  0.0909095   6.746 5.99e-10 ***
+## df$x        0.6132303  0.0909095   6.746 5.99e-10 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -625,7 +714,7 @@ for(i in y_names){
 ## 
 ## 
 ## Call:
-## lm(formula = data[[i]] ~ x)
+## lm(formula = df[[i]] ~ df$x)
 ## 
 ## Residuals:
 ##      Min       1Q   Median       3Q      Max 
@@ -634,523 +723,31 @@ for(i in y_names){
 ## Coefficients:
 ##              Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept) -0.003076   0.005919  -0.520    0.604    
-## x            0.820661   0.086170   9.524 2.69e-16 ***
+## df$x         0.820661   0.086170   9.524 2.69e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## Residual standard error: 0.06449 on 118 degrees of freedom
 ## Multiple R-squared:  0.4346, Adjusted R-squared:  0.4298 
 ## F-statistic:  90.7 on 1 and 118 DF,  p-value: 2.695e-16</code></pre>
-<p>Testing hypothesis.</p>
-<pre class="r"><code>linearHypothesis(olsreg, &quot;x = 1&quot;) </code></pre>
+</div>
+<div id="testing-hypothesis." class="section level2">
+<h2>Testing hypothesis.</h2>
+<pre class="stata"><code>test x=1</code></pre>
+<pre class="r"><code>linearHypothesis(olsreg, &quot;df$x = 1&quot;) </code></pre>
 <pre><code>## Linear hypothesis test
 ## 
 ## Hypothesis:
-## x = 1
+## df$x = 1
 ## 
 ## Model 1: restricted model
-## Model 2: data[[i]] ~ x
+## Model 2: df[[i]] ~ df$x
 ## 
 ##   Res.Df     RSS Df Sum of Sq      F  Pr(&gt;F)  
 ## 1    119 0.50877                              
 ## 2    118 0.49076  1  0.018014 4.3315 0.03958 *
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
-</div>
-<div id="python." class="section level2">
-<h2>Python.</h2>
-<pre class="r"><code>library(reticulate)
-use_python(&quot;/Users/andrey_lukyanov/anaconda/bin/python3.6&quot;)</code></pre>
-<p>Reading Dataset.</p>
-<pre class="python"><code>import pandas as pd
-data = pd.read_stata(&quot;Seminar2.dta&quot;)</code></pre>
-<p>Renaming.</p>
-<pre class="python"><code>data.rename(columns={'A': 'n', 'B': 'date'}, inplace=True)</code></pre>
-<p>Generate variables.</p>
-<pre class="python"><code>data['y_delta'] = data['DELTA'] - data['RKFREE']</code></pre>
-<p>Dropping NaNs.</p>
-<pre class="python"><code>data.dropna(how='any', inplace = True)</code></pre>
-<p>Generating X.</p>
-<pre class="python"><code>x = data['MARKET'] - data['RKFREE']</code></pre>
-<p>Regression.</p>
-<pre class="python"><code>from statsmodels.regression.linear_model import OLS
-import statsmodels as sm
-model_ols = OLS(data['y_delta'], x, hasconst=1).fit()
-print(model_ols.summary())</code></pre>
-<pre><code>##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                y_delta   R-squared:                       0.122
-## Model:                            OLS   Adj. R-squared:                  0.122
-## Method:                 Least Squares   F-statistic:                       inf
-## Date:                Sun, 06 May 2018   Prob (F-statistic):                nan
-## Time:                        20:45:54   Log-Likelihood:                 119.35
-## No. Observations:                 120   AIC:                            -236.7
-## Df Residuals:                     119   BIC:                            -233.9
-## Df Model:                           0                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## x1             0.4918      0.119      4.117      0.000       0.255       0.728
-## ==============================================================================
-## Omnibus:                        2.994   Durbin-Watson:                   1.987
-## Prob(Omnibus):                  0.224   Jarque-Bera (JB):                2.598
-## Skew:                           0.356   Prob(JB):                        0.273
-## Kurtosis:                       3.115   Cond. No.                         1.00
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-## 
-## /Users/andrey_lukyanov/anaconda/lib/python3.6/site-packages/statsmodels/regression/linear_model.py:1396: RuntimeWarning: divide by zero encountered in double_scalars
-##   return self.ess/self.df_model</code></pre>
-<p>Loop.</p>
-<pre class="python"><code>names = [&quot;BOISE&quot;, &quot;CITCRP&quot;, &quot;CONED&quot;, &quot;CONTIL&quot;, &quot;DATGEN&quot;, &quot;DEC&quot;, &quot;GENMIL&quot;, &quot;GERBER&quot;, &quot;IBM&quot;, &quot;MOTOR&quot;, &quot;PANAM&quot;, &quot;PSNH&quot;, &quot;TANDY&quot;, &quot;TEXACO&quot;, &quot;WEYER&quot;]
-for i in names:
-  data['y_' + str(i)] = data[i] - data['RKFREE']
-y_names = [&quot;y_BOISE&quot;, &quot;y_CITCRP&quot;, &quot;y_CONED&quot;, &quot;y_CONTIL&quot;, &quot;y_DATGEN&quot;, &quot;y_DEC&quot;, &quot;y_GENMIL&quot;, &quot;y_GERBER&quot;, &quot;y_IBM&quot;, &quot;y_MOTOR&quot;, &quot;y_PANAM&quot;, &quot;y_PSNH&quot;, &quot;y_TANDY&quot;, &quot;y_TEXACO&quot;, &quot;y_WEYER&quot;]
-x = sm.tools.tools.add_constant(x)
-x.columns = ['const', 'x']
-for i in y_names:
-  olsreg = OLS(data[i], x).fit()
-  print(olsreg.summary())</code></pre>
-<pre><code>##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                y_BOISE   R-squared:                       0.430
-## Model:                            OLS   Adj. R-squared:                  0.425
-## Method:                 Least Squares   F-statistic:                     89.08
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           4.29e-16
-## Time:                        20:45:54   Log-Likelihood:                 142.84
-## No. Observations:                 120   AIC:                            -281.7
-## Df Residuals:                     118   BIC:                            -276.1
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0031      0.007      0.461      0.645      -0.010       0.017
-## x              0.9359      0.099      9.438      0.000       0.740       1.132
-## ==============================================================================
-## Omnibus:                        4.436   Durbin-Watson:                   2.168
-## Prob(Omnibus):                  0.109   Jarque-Bera (JB):                5.030
-## Skew:                           0.184   Prob(JB):                       0.0809
-## Kurtosis:                       3.933   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:               y_CITCRP   R-squared:                       0.319
-## Model:                            OLS   Adj. R-squared:                  0.313
-## Method:                 Least Squares   F-statistic:                     55.32
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           1.80e-11
-## Time:                        20:45:54   Log-Likelihood:                 154.89
-## No. Observations:                 120   AIC:                            -305.8
-## Df Residuals:                     118   BIC:                            -300.2
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0002      0.006      0.040      0.968      -0.012       0.012
-## x              0.6670      0.090      7.438      0.000       0.489       0.845
-## ==============================================================================
-## Omnibus:                        1.788   Durbin-Watson:                   1.842
-## Prob(Omnibus):                  0.409   Jarque-Bera (JB):                1.335
-## Skew:                           0.100   Prob(JB):                        0.513
-## Kurtosis:                       3.476   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                y_CONED   R-squared:                       0.016
-## Model:                            OLS   Adj. R-squared:                  0.008
-## Method:                 Least Squares   F-statistic:                     1.946
-## Date:                Sun, 06 May 2018   Prob (F-statistic):              0.166
-## Time:                        20:45:54   Log-Likelihood:                 190.23
-## No. Observations:                 120   AIC:                            -376.5
-## Df Residuals:                     118   BIC:                            -370.9
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0110      0.005      2.398      0.018       0.002       0.020
-## x              0.0932      0.067      1.395      0.166      -0.039       0.225
-## ==============================================================================
-## Omnibus:                        1.726   Durbin-Watson:                   2.146
-## Prob(Omnibus):                  0.422   Jarque-Bera (JB):                1.223
-## Skew:                           0.157   Prob(JB):                        0.542
-## Kurtosis:                       3.382   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:               y_CONTIL   R-squared:                       0.111
-## Model:                            OLS   Adj. R-squared:                  0.103
-## Method:                 Least Squares   F-statistic:                     14.74
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           0.000200
-## Time:                        20:45:54   Log-Likelihood:                 64.525
-## No. Observations:                 120   AIC:                            -125.0
-## Df Residuals:                     118   BIC:                            -119.5
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const         -0.0132      0.013     -1.007      0.316      -0.039       0.013
-## x              0.7311      0.190      3.839      0.000       0.354       1.108
-## ==============================================================================
-## Omnibus:                      107.162   Durbin-Watson:                   2.072
-## Prob(Omnibus):                  0.000   Jarque-Bera (JB):             2286.888
-## Skew:                           2.705   Prob(JB):                         0.00
-## Kurtosis:                      23.691   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:               y_DATGEN   R-squared:                       0.306
-## Model:                            OLS   Adj. R-squared:                  0.300
-## Method:                 Least Squares   F-statistic:                     52.10
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           5.54e-11
-## Time:                        20:45:54   Log-Likelihood:                 99.065
-## No. Observations:                 120   AIC:                            -194.1
-## Df Residuals:                     118   BIC:                            -188.6
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const         -0.0067      0.010     -0.686      0.494      -0.026       0.013
-## x              1.0308      0.143      7.218      0.000       0.748       1.314
-## ==============================================================================
-## Omnibus:                        4.931   Durbin-Watson:                   2.082
-## Prob(Omnibus):                  0.085   Jarque-Bera (JB):                5.323
-## Skew:                           0.256   Prob(JB):                       0.0699
-## Kurtosis:                       3.895   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                  y_DEC   R-squared:                       0.342
-## Model:                            OLS   Adj. R-squared:                  0.336
-## Method:                 Least Squares   F-statistic:                     61.23
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           2.41e-12
-## Time:                        20:45:54   Log-Likelihood:                 132.25
-## No. Observations:                 120   AIC:                            -260.5
-## Df Residuals:                     118   BIC:                            -254.9
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0068      0.007      0.921      0.359      -0.008       0.022
-## x              0.8474      0.108      7.825      0.000       0.633       1.062
-## ==============================================================================
-## Omnibus:                        6.210   Durbin-Watson:                   2.139
-## Prob(Omnibus):                  0.045   Jarque-Bera (JB):                9.722
-## Skew:                           0.116   Prob(JB):                      0.00774
-## Kurtosis:                       4.375   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:               y_GENMIL   R-squared:                       0.081
-## Model:                            OLS   Adj. R-squared:                  0.073
-## Method:                 Least Squares   F-statistic:                     10.41
-## Date:                Sun, 06 May 2018   Prob (F-statistic):            0.00162
-## Time:                        20:45:54   Log-Likelihood:                 163.14
-## No. Observations:                 120   AIC:                            -322.3
-## Df Residuals:                     118   BIC:                            -316.7
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0078      0.006      1.358      0.177      -0.004       0.019
-## x              0.2702      0.084      3.227      0.002       0.104       0.436
-## ==============================================================================
-## Omnibus:                        2.585   Durbin-Watson:                   2.083
-## Prob(Omnibus):                  0.275   Jarque-Bera (JB):                2.604
-## Skew:                           0.343   Prob(JB):                        0.272
-## Kurtosis:                       2.774   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:               y_GERBER   R-squared:                       0.239
-## Model:                            OLS   Adj. R-squared:                  0.232
-## Method:                 Least Squares   F-statistic:                     37.02
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           1.49e-08
-## Time:                        20:45:54   Log-Likelihood:                 138.48
-## No. Observations:                 120   AIC:                            -273.0
-## Df Residuals:                     118   BIC:                            -267.4
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0051      0.007      0.720      0.473      -0.009       0.019
-## x              0.6256      0.103      6.084      0.000       0.422       0.829
-## ==============================================================================
-## Omnibus:                        7.127   Durbin-Watson:                   2.255
-## Prob(Omnibus):                  0.028   Jarque-Bera (JB):                7.198
-## Skew:                           0.600   Prob(JB):                       0.0274
-## Kurtosis:                       3.007   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                  y_IBM   R-squared:                       0.279
-## Model:                            OLS   Adj. R-squared:                  0.273
-## Method:                 Least Squares   F-statistic:                     45.74
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           5.49e-10
-## Time:                        20:45:54   Log-Likelihood:                 188.90
-## No. Observations:                 120   AIC:                            -373.8
-## Df Residuals:                     118   BIC:                            -368.2
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const         -0.0005      0.005     -0.106      0.916      -0.010       0.009
-## x              0.4568      0.068      6.763      0.000       0.323       0.591
-## ==============================================================================
-## Omnibus:                        1.160   Durbin-Watson:                   1.883
-## Prob(Omnibus):                  0.560   Jarque-Bera (JB):                1.120
-## Skew:                           0.231   Prob(JB):                        0.571
-## Kurtosis:                       2.894   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                y_MOTOR   R-squared:                       0.357
-## Model:                            OLS   Adj. R-squared:                  0.351
-## Method:                 Least Squares   F-statistic:                     65.48
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           5.91e-13
-## Time:                        20:45:54   Log-Likelihood:                 136.18
-## No. Observations:                 120   AIC:                            -268.4
-## Df Residuals:                     118   BIC:                            -262.8
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0053      0.007      0.730      0.467      -0.009       0.020
-## x              0.8481      0.105      8.092      0.000       0.641       1.056
-## ==============================================================================
-## Omnibus:                        2.684   Durbin-Watson:                   2.030
-## Prob(Omnibus):                  0.261   Jarque-Bera (JB):                1.780
-## Skew:                          -0.031   Prob(JB):                        0.411
-## Kurtosis:                       2.406   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                y_PANAM   R-squared:                       0.146
-## Model:                            OLS   Adj. R-squared:                  0.138
-## Method:                 Least Squares   F-statistic:                     20.12
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           1.70e-05
-## Time:                        20:45:54   Log-Likelihood:                 82.652
-## No. Observations:                 120   AIC:                            -161.3
-## Df Residuals:                     118   BIC:                            -155.7
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const         -0.0086      0.011     -0.762      0.447      -0.031       0.014
-## x              0.7345      0.164      4.486      0.000       0.410       1.059
-## ==============================================================================
-## Omnibus:                        9.360   Durbin-Watson:                   2.208
-## Prob(Omnibus):                  0.009   Jarque-Bera (JB):               11.385
-## Skew:                           0.461   Prob(JB):                      0.00337
-## Kurtosis:                       4.195   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                 y_PSNH   R-squared:                       0.018
-## Model:                            OLS   Adj. R-squared:                  0.010
-## Method:                 Least Squares   F-statistic:                     2.153
-## Date:                Sun, 06 May 2018   Prob (F-statistic):              0.145
-## Time:                        20:45:54   Log-Likelihood:                 96.825
-## No. Observations:                 120   AIC:                            -189.6
-## Df Residuals:                     118   BIC:                            -184.1
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const         -0.0126      0.010     -1.259      0.211      -0.032       0.007
-## x              0.2135      0.145      1.467      0.145      -0.075       0.502
-## ==============================================================================
-## Omnibus:                       29.398   Durbin-Watson:                   1.882
-## Prob(Omnibus):                  0.000   Jarque-Bera (JB):               94.968
-## Skew:                          -0.808   Prob(JB):                     2.39e-21
-## Kurtosis:                       7.047   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                y_TANDY   R-squared:                       0.319
-## Model:                            OLS   Adj. R-squared:                  0.313
-## Method:                 Least Squares   F-statistic:                     55.31
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           1.80e-11
-## Time:                        20:45:54   Log-Likelihood:                 100.44
-## No. Observations:                 120   AIC:                            -196.9
-## Df Residuals:                     118   BIC:                            -191.3
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0107      0.010      1.099      0.274      -0.009       0.030
-## x              1.0500      0.141      7.437      0.000       0.770       1.330
-## ==============================================================================
-## Omnibus:                        6.772   Durbin-Watson:                   1.891
-## Prob(Omnibus):                  0.034   Jarque-Bera (JB):                6.318
-## Skew:                           0.493   Prob(JB):                       0.0425
-## Kurtosis:                       3.538   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:               y_TEXACO   R-squared:                       0.278
-## Model:                            OLS   Adj. R-squared:                  0.272
-## Method:                 Least Squares   F-statistic:                     45.50
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           5.99e-10
-## Time:                        20:45:54   Log-Likelihood:                 153.26
-## No. Observations:                 120   AIC:                            -302.5
-## Df Residuals:                     118   BIC:                            -296.9
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const          0.0007      0.006      0.115      0.909      -0.012       0.013
-## x              0.6132      0.091      6.746      0.000       0.433       0.793
-## ==============================================================================
-## Omnibus:                       34.680   Durbin-Watson:                   2.023
-## Prob(Omnibus):                  0.000   Jarque-Bera (JB):              130.679
-## Skew:                           0.920   Prob(JB):                     4.20e-29
-## Kurtosis:                       7.769   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-##                             OLS Regression Results                            
-## ==============================================================================
-## Dep. Variable:                y_WEYER   R-squared:                       0.435
-## Model:                            OLS   Adj. R-squared:                  0.430
-## Method:                 Least Squares   F-statistic:                     90.70
-## Date:                Sun, 06 May 2018   Prob (F-statistic):           2.69e-16
-## Time:                        20:45:54   Log-Likelihood:                 159.69
-## No. Observations:                 120   AIC:                            -315.4
-## Df Residuals:                     118   BIC:                            -309.8
-## Df Model:                           1                                         
-## Covariance Type:            nonrobust                                         
-## ==============================================================================
-##                  coef    std err          t      P&gt;|t|      [0.025      0.975]
-## ------------------------------------------------------------------------------
-## const         -0.0031      0.006     -0.520      0.604      -0.015       0.009
-## x              0.8207      0.086      9.524      0.000       0.650       0.991
-## ==============================================================================
-## Omnibus:                        1.287   Durbin-Watson:                   2.294
-## Prob(Omnibus):                  0.526   Jarque-Bera (JB):                1.369
-## Skew:                           0.206   Prob(JB):                        0.504
-## Kurtosis:                       2.677   Cond. No.                         14.6
-## ==============================================================================
-## 
-## Warnings:
-## [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.</code></pre>
-<p>Testing hypothesis.</p>
-<pre class="python"><code>hypothesis = &quot;(x = 1)&quot;
-print(olsreg.f_test(hypothesis))</code></pre>
-<pre><code>## &lt;F test: F=array([[4.33145393]]), p=0.039577234189961334, df_denom=118, df_num=1&gt;</code></pre>
-</div>
-<div id="stata" class="section level2">
-<h2>Stata</h2>
-<pre class="r"><code>library(devtools)
-devtools::install_github(&quot;Hemken/Statamarkdown&quot;)</code></pre>
-<pre><code>## Downloading GitHub repo Hemken/Statamarkdown@master
-## from URL https://api.github.com/repos/Hemken/Statamarkdown/zipball/master</code></pre>
-<pre><code>## Installing Statamarkdown</code></pre>
-<pre><code>## '/Library/Frameworks/R.framework/Resources/bin/R' --no-site-file  \
-##   --no-environ --no-save --no-restore --quiet CMD INSTALL  \
-##   '/private/var/folders/0k/g398c3v9511dx_40tw2hj33h0000gn/T/Rtmp3J2lYB/devtoolsb0a3265b4cdb/Hemken-Statamarkdown-d808331'  \
-##   --library='/Library/Frameworks/R.framework/Versions/3.5/Resources/library'  \
-##   --install-tests</code></pre>
-<pre><code>## </code></pre>
-<p>Setting up Stata.</p>
-<pre class="stata"><code>#Reading Dataset.
-use &quot;/Users/andrey_lukyanov/Google_Drive/Studies/Year_3/Проект_по_метрике/Отобранные/Майнор/Seminar_2/Seminar2.dta&quot;
-
-/*Generate variables*/
-gen y_delta=DELTA-RKFREE
-
-drop if n==.
-
-gen x=MARKET-RKFREE
-
-/*Regression*/
-reg y_delta x
-
-/*Loop*/
-
-for var BOISE CITCRP CONED ///
-CONTIL DATGEN DEC GENMIL ///
-GERBER IBM MOTOR PANAM PSNH ///
-TANDY TEXACO WEYER: gen y_X=X-RKFREE
-
-/*Another approach*/
-
-/* foreach i of var  BOISE CITCRP CONED ///
-CONTIL DATGEN DEC GENMIL ///
-GERBER IBM MOTOR PANAM PSNH ///
-TANDY TEXACO WEYER {
-gen y_`i'=`i'-RKFREE 
-}
-*/
-
-
-foreach i of var  BOISE CITCRP CONED ///
-CONTIL DATGEN DEC GENMIL ///
-GERBER IBM MOTOR PANAM PSNH ///
-TANDY TEXACO WEYER {
-reg y_`i' x
-}
-
-/*Testing hypothesis*/
-
-test x=1
-</code></pre>
-<pre><code></code></pre>
 </div>
 
 
