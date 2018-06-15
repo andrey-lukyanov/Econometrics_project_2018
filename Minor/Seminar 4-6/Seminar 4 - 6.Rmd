@@ -24,6 +24,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(rio) # для чтения .dta файлов
 library(gap) #Chow test
+library(lmtest) #Wald test
 
 df <- import(file = "housing.dta")
 ```
@@ -188,17 +189,15 @@ scalar list ddf F1 pval1
 ```
 
 ```{r}
-df_1 <- filter(df, df$bedrooms < 3)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
-y_1 <- filter(df, df$bedrooms < 3)[, c("lnprice")]
-df_2 <- filter(df, df$bedrooms > 2)[, c("lnlotsize", "bedrooms", "bathrms", "stories", "driveway", "recroom", "fullbase", "gashw", "airco", "garagepl", "prefarea")]
-y_2 <- filter(df, df$bedrooms > 2)[, c("lnprice")]
-chow.test(y_1,df_1,y_2,df_2)
+#df_1 <- filter(df, df$bedrooms < 3)[, c("lnlotsize", #"bedrooms", "bathrms", "stories", "driveway", "recroom", #"fullbase", "gashw", "airco", "garagepl", "prefarea")]
+#y_1 <- filter(df, df$bedrooms < 3)[, c("lnprice")]
+#df_2 <- filter(df, df$bedrooms > 2)[, c("lnlotsize", #"bedrooms", "bathrms", "stories", "driveway", "recroom", #"fullbase", "gashw", "airco", "garagepl", "prefarea")]
+#y_2 <- filter(df, df$bedrooms > 2)[, c("lnprice")]
+#chow.test(y_1,df_1,y_2,df_2)
 ```
 
 ```{r}
-library(lmtest)
-#не сходится с верхним тестом
-model_r <- lm(data = df, lnlotsize ~ bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea)
-model_ur <- lm(data = df, lnlotsize ~ (bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea)*(df$bedrooms < 3))
-waldtest(model_r, model_ur)
+model_r <- lm(data = df, lnprice ~ lnlotsize + bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea)
+model_ur <- lm(data = df, lnprice ~ (lnlotsize + bedrooms + bathrms + stories + driveway + recroom + fullbase + gashw + airco + garagepl + prefarea)*(bedrooms < 3))
+waldtest(model_r, model_ur, test = "F")
 ```

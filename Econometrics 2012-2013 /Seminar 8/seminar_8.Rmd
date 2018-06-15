@@ -3,7 +3,15 @@ title: "seminar_8"
 output: html_document
 ---
 
-Загружаем нужные библиотеки и фаил с данными
+<!-- Цвета для кусков кода -->
+<style>
+pre.r {
+    background-color: #81BEF7 !important;
+}
+pre.stata {
+    background-color: #BDBDBD !important;
+}
+</style>
 
 ```{r setup, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -16,18 +24,24 @@ library(plsdof)
 housing <- read.dta(file = '~/Desktop/housing.dta')
 ```
 
-# Часть 1
-
-Построим регрессию цены продажи дома на все остальные регрессоры
-```{r, comment= ""}
-model_1 <- lm(data = housing, price ~. )
-summary(model_1)
+# Part 1
+```{stata, eval=FALSE}
+reg  price lotsize bedrooms bathrms airco driveway recroom fullbase gashw stories garagepl prefarea
 ```
 
-Проведем RESET test Рамсея
-```{r, comment= ""}
-resettest(model_1)
+```{r}
+lin_m1 <- lm(price ~ lotsize + bedrooms + bathrms + airco + driveway + recroom + fullbase + gashw + stories + garagepl + prefarea, data = df)
+summary(lin_m1)
 ```
+
+```{stata, eval=FALSE}
+estat ovtest
+```
+
+```{r, comment= ""}
+resettest(lin_m1)
+```
+
 
 Создадим переменную логарифм цены и построим с ней регрессию
 
@@ -159,7 +173,6 @@ x.pca <- prcomp(X,  center = TRUE, scale. = TRUE)
 model_pcr <- pcr(y = y, X = X)
 model_pcr$coefficients
 model_pcr$intercept
-
 ```
 
 

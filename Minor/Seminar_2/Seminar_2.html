@@ -322,7 +322,6 @@ ren B date</code></pre>
 <pre class="r"><code>library(tidyverse)
 library(rio) # для чтения .dta файлов
 library(car) # для линейных гипотез
-library(sjPlot) # для отображения датафреймов
 
 df &lt;- import(file = &quot;Seminar2.dta&quot;)
 
@@ -343,92 +342,25 @@ df &lt;- na.omit(df)</code></pre>
 <h2>Regression.</h2>
 <pre class="stata"><code>reg y_delta x</code></pre>
 <pre class="r"><code>olsreg &lt;- lm(y_delta ~ x, data = df)
-sjt.lm(olsreg)</code></pre>
-<table style="border-collapse:collapse; border:none;border-bottom:double;">
-<td style="padding:0.2cm; border-top:double;">
- 
-</td>
-<td style="border-bottom:1px solid; padding-left:0.5em; padding-right:0.5em; border-top:double;">
- 
-</td>
-<td style="padding:0.2cm; text-align:center; border-bottom:1px solid; border-top:double;" colspan="3">
-y_delta
-</td>
-</tr>
-<tr>
-<td style="padding:0.2cm; font-style:italic;">
- 
-</td>
-<td style="padding-left:0.5em; padding-right:0.5em; font-style:italic;">
- 
-</td>
-<td style="padding:0.2cm; text-align:center; font-style:italic; ">
-B
-</td>
-<td style="padding:0.2cm; text-align:center; font-style:italic; ">
-CI
-</td>
-<td style="padding:0.2cm; text-align:center; font-style:italic; ">
-p
-</td>
-</tr>
-<tr>
-<td style="padding:0.2cm; border-top:1px solid; text-align:left;">
-(Intercept)
-</td>
-<td style="padding-left:0.5em; padding-right:0.5em; border-top:1px solid; ">
- 
-</td>
-<td style="padding:0.2cm; text-align:center; border-top:1px solid; ">
-0.00
-</td>
-<td style="padding:0.2cm; text-align:center; border-top:1px solid; ">
--0.02 – 0.02
-</td>
-<td style="padding:0.2cm; text-align:center; border-top:1px solid; ">
-.871
-</td>
-</tr>
-<tr>
-<td style="padding:0.2cm; text-align:left;">
-x
-</td>
-<td style="padding-left:0.5em; padding-right:0.5em;">
- 
-</td>
-<td style="padding:0.2cm; text-align:center; ">
-0.49
-</td>
-<td style="padding:0.2cm; text-align:center; ">
-0.25 – 0.73
-</td>
-<td style="padding:0.2cm; text-align:center; ">
-&lt;.001
-</td>
-</tr>
-<tr>
-<td style="padding:0.2cm; padding-top:0.1cm; padding-bottom:0.1cm; text-align:left; border-top:1px solid;">
-Observations
-</td>
-<td style="padding-left:0.5em; padding-right:0.5em; border-top:1px solid;">
- 
-</td>
-<td style="padding:0.2cm; padding-top:0.1cm; padding-bottom:0.1cm; text-align:center; border-top:1px solid;" colspan="3">
-120
-</td>
-</tr>
-<tr>
-<td style="padding:0.2cm; text-align:left; padding-top:0.1cm; padding-bottom:0.1cm;">
-R<sup>2</sup> / adj. R<sup>2</sup>
-</td>
-<td style="padding-left:0.5em; padding-right:0.5em;">
- 
-</td>
-<td style="padding:0.2cm; text-align:center; padding-top:0.1cm; padding-bottom:0.1cm;" colspan="3">
-.123 / .115
-</td>
-</tr>
-</table>
+summary(olsreg)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = y_delta ~ x, data = df)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.25567 -0.06651 -0.01032  0.06071  0.26052 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 0.001350   0.008283   0.163    0.871    
+## x           0.489736   0.120585   4.061 8.82e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.09025 on 118 degrees of freedom
+## Multiple R-squared:  0.1226, Adjusted R-squared:  0.1152 
+## F-statistic: 16.49 on 1 and 118 DF,  p-value: 8.818e-05</code></pre>
 </div>
 <div id="loop." class="section level2">
 <h2>Loop.</h2>

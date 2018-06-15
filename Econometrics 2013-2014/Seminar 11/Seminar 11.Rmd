@@ -22,7 +22,6 @@ library(haven) #чтение .dta файлов
 library(AER)
 
 df <- read_dta(file = "Funds.dta")
-#ts <- ts(df[,c("crsp", "ge", "ibm", "mc")], start = c(1999, 1), end = #c(2009, 12), frequency = 12)
 ```
 
 ## OLS regression

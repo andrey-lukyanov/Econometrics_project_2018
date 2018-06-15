@@ -95,7 +95,7 @@ summary(model_solow_2_with_constraint)
 summary(model_solow_3_with_constraint)
 ```
 
-## Chow test
+## Chow test.
 ```{stata, eval=FALSE}
 reg lngdp85 lnngdelta lninv
 scalar r_all=e(rss)
@@ -135,7 +135,7 @@ a
 
 ```
 
-## Estimation of augumented Solow model
+## Estimation of augumented Solow model.
 ```{stata, eval=FALSE}
 reg lngdp85 lnngdelta lninv lnschool if nonoil==1
 reg lngdp85 lnngdelta lninv lnschool if intermed==1
@@ -151,7 +151,7 @@ summary(model_solow_2_with_school)
 summary(model_solow_3_with_school)
 ```
 
-## Test for unconditional convergence
+## Test for unconditional convergence.
 ```{stata, eval=FALSE}
 gen lngdp85_lngdp60=lngdp85-lngdp60
 reg lngdp85_lngdp60 lngdp60 if nonoil==1
