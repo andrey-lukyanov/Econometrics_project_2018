@@ -68,7 +68,7 @@ twoway dot price bathrms if bathrms!=4 || lfit  price bathrms if bathrms!=4
 ```
 
 ```{r}
-ggplot(data=filter(df, df$bathrms != 4), aes(x=bathrms, y=price)) + geom_point() + geom_smooth(method='lm') + labs(x = "Bathrooms", y = "Price")
+ggplot(data=filter(df, bathrms != 4), aes(x=bathrms, y=price)) + geom_point() + geom_smooth(method='lm') + labs(x = "Bathrooms", y = "Price")
 ```
 ```{stata, eval=FALSE}
 twoway dot price bedrooms || dot  price bathrms

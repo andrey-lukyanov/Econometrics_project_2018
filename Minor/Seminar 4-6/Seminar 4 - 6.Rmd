@@ -22,10 +22,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
-library(haven) #чтение .dta файлов
+library(rio) # для чтения .dta файлов
 library(gap) #Chow test
 
-df <- read_dta(file = "housing.dta")
+df <- import(file = "housing.dta")
 ```
 
 ## 2.

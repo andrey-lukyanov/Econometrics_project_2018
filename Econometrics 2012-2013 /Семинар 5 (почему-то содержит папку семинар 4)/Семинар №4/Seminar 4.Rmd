@@ -1,0 +1,177 @@
+<!-- Цвета для кусков кода -->
+<style>
+pre.r {
+    background-color: #81BEF7 !important;
+}
+pre.stata {
+    background-color: #BDBDBD !important;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("knitr") # создание отчётов
+library(rio) # для чтения .dta файлов
+library(tidyverse) # коллекция пакетов: ggplot2, dplyr, ...
+library(lmtest) # тесты для линейных моделей
+library(car) # проверка гипотез
+```
+
+```{r}
+mrw <- import(file = 'mrw.dta')
+```
+
+## Generation of new variables.
+```{stata, eval=FALSE}
+gen lngdp85=ln(gdp85)
+gen lngdp60=ln(gdp60)
+gen lngdpgrow=ln(gdpgrow)
+gen lnngdelta=ln(popgrow/100+0.05)
+gen lninv=ln(inv/100)
+gen lnschool=ln(school)
+```
+
+```{r, warning=FALSE}
+mrw <- mutate(mrw, lngdp85 = log(gdp85),
+              lngdp60 = log(gdp60), 
+              lngdpgrow = log(gdpgrow), 
+              lnngdelta = log(popgrow/100+0.05),
+              lninv = log(inv/100), 
+              lnschool = log(school))
+```
+## Estimation of the textbook Solow model.
+```{stata, eval=FALSE}
+reg lngdp85 lnngdelta lninv if nonoil==1
+reg lngdp85 lnngdelta lninv if intermed==1
+reg lngdp85 lnngdelta lninv if oecd==1
+```
+
+```{r}
+model_solow_1 <- lm(lngdp85 ~ lnngdelta + lninv, data = filter(mrw, nonoil == 1))
+model_solow_2 <- lm(lngdp85 ~ lnngdelta + lninv,data = filter(mrw, intermed == 1))
+model_solow_3 <- lm(lngdp85 ~ lnngdelta + lninv,data = filter(mrw, oecd == 1))
+summary(model_solow_1)
+summary(model_solow_2)
+summary(model_solow_3)
+```
+
+## Test linear hypothesis.
+```{stata, eval=FALSE}
+test lnngdelta + lninv = 0
+```
+
+```{r}
+linearHypothesis(model_solow_3, c("lnngdelta + lninv = 0") ,test="F")
+```
+
+## Estimation of the augumented Solow model with constraints.
+
+```{stata, eval=FALSE}
+constraint 1 lnngdelta=-lninv
+cnsreg lngdp85 lnngdelta lninv if nonoil==1, constraints(1)
+cnsreg lngdp85 lnngdelta lninv if intermed==1, constraints(1)
+cnsreg lngdp85 lnngdelta lninv if oecd==1, constraints(1)
+```
+
+```{stata, eval=FALSE}
+#эквивалентен предыдущему блоку
+gen lninv_lnngdelta=lninv-lnngdelta
+reg lngdp85 lninv_lnngdelta if nonoil==1
+reg lngdp85 lninv_lnngdelta if intermed==1
+reg lngdp85 lninv_lnngdelta if oecd==1
+```
+
+```{r}
+mrw <- mutate(mrw, lninv_lnngdelta = lninv - lnngdelta)
+
+model_solow_1_with_constraint <- lm(lngdp85 ~ lninv_lnngdelta, data = filter(mrw, nonoil == 1))
+     
+model_solow_2_with_constraint <- lm(lngdp85 ~ lninv_lnngdelta, data = filter(mrw, intermed == 1))
+
+model_solow_3_with_constraint <- lm(lngdp85 ~ lninv_lnngdelta,data = filter(mrw, oecd == 1))
+
+summary(model_solow_1_with_constraint)
+summary(model_solow_2_with_constraint)
+summary(model_solow_3_with_constraint)
+```
+
+## Chow test
+```{stata, eval=FALSE}
+reg lngdp85 lnngdelta lninv
+scalar r_all=e(rss)
+scalar n_all=e(N)
+
+reg lngdp85 lnngdelta lninv if nonoil==1
+scalar r_noil=e(rss)
+scalar n_noil=e(N)
+
+reg lngdp85 lnngdelta lninv if nonoil==0
+scalar r_oil=e(rss)
+scalar n_oil=e(N)
+
+
+scalar ddf=n_noil+n_oil-3*2
+scalar r_tot=r_noil+r_oil
+scalar fh1=((r_all-r_tot)/(3))/(r_tot/ddf)
+scalar pval1=Ftail(3,ddf,fh1)
+scalar list ddf fh1 pval1
+```
+
+```{r}
+#переделать
+model_total <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw)
+model_nonoil1 <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw[mrw$nonoil == 1, ])
+model_nonoil0 <- lm(lngdp85 ~ lnngdelta + lninv,data = mrw[mrw$nonoil == 0, ])
+
+RSS_total <- sum(model_total$residuals^2)
+RSS_nonoil1 <- sum(model_nonoil1$residuals^2)
+RSS_nonoil0 <- sum(model_nonoil0$residuals^2)
+
+F_r <- ((RSS_total - RSS_nonoil1 - RSS_nonoil0)/ 4 )/ ((RSS_nonoil1 + RSS_nonoil0)/ (121 - 8))
+
+value <- pf(F_r, 4, 113) # значение функции распределения Фишера с указанными степенями свободы
+a = 1 - value
+a
+
+```
+
+## Estimation of augumented Solow model
+```{stata, eval=FALSE}
+reg lngdp85 lnngdelta lninv lnschool if nonoil==1
+reg lngdp85 lnngdelta lninv lnschool if intermed==1
+reg lngdp85 lnngdelta lninv lnschool if oecd==1
+```
+
+```{r}
+model_solow_1_with_school <- lm(formula = lngdp85 ~ lnngdelta + lninv + lnschool, data = filter(mrw, nonoil == 1))
+model_solow_2_with_school <- lm(formula = lngdp85 ~ lnngdelta + lninv + lnschool, data = filter(mrw, intermed == 1))
+model_solow_3_with_school <- lm(formula = lngdp85 ~ lnngdelta + lninv + lnschool, data = filter(mrw, oecd == 1))
+summary(model_solow_1_with_school)
+summary(model_solow_2_with_school)
+summary(model_solow_3_with_school)
+```
+
+## Test for unconditional convergence
+```{stata, eval=FALSE}
+gen lngdp85_lngdp60=lngdp85-lngdp60
+reg lngdp85_lngdp60 lngdp60 if nonoil==1
+reg lngdp85_lngdp60 lngdp60 if intermed==1
+reg lngdp85_lngdp60 lngdp60 if oecd==1
+```
+
+```{r}
+mrw <- mutate(mrw, lngdp85_lngdp60 = lngdp85 - lngdp60)
+
+model_con_1 <- lm(formula = lngdp85_lngdp60 ~ lngdp60,data = filter(mrw, nonoil == 1))
+model_con_2 <- lm(formula = lngdp85_lngdp60 ~ lngdp60,data = filter(mrw, intermed == 1))
+model_con_3 <- lm(formula = lngdp85_lngdp60 ~ lngdp60,data = filter(mrw, oecd == 1))
+summary(model_con_1)
+summary(model_con_2)
+summary(model_con_3)
+```
+
+График:
+```{r, warning=FALSE}
+ggplot(mrw) + geom_point(aes(x = lngdp60,y = lngdp85_lngdp60))
+```
+

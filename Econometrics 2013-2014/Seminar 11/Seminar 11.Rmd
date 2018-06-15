@@ -2,6 +2,15 @@
 title: "Seminar 11"
 output: html_document
 ---
+<!-- Цвета для кусков кода -->
+<style>
+pre.r {
+    background-color: #81BEF7 !important;
+}
+pre.stata {
+    background-color: #BDBDBD !important;
+}
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -17,67 +26,35 @@ df <- read_dta(file = "Funds.dta")
 ```
 
 ## OLS regression
+```{stata, eval=FALSE}
+regress loge logsize
+```
+
 ```{r}
 lin_m1 <- lm(loge ~ logsize, data = df)
 summary(lin_m1)
 ```
 
 ## IV regression
+```{stata, eval=FALSE}
+ivregress 2sls loge (logsize=age)
+```
+
 ```{r}
 iv <- ivreg(loge ~ logsize | age, data = df)
 summary(iv)
 ```
 
 ## Two step LS procedure
+```{stata, eval=FALSE}
+regress logsize age
+predict logsize_hat
+regress loge logsize_hat
+```
+
 ```{r}
 lin_m2 <- lm(logsize ~ age, data = df)
 df$logsize_hat <- predict(lin_m2)
 
 lin_m3 <- lm(loge ~ logsize_hat, data = df)
 ```
-
-## Stata
-```{r}
-library(devtools)
-devtools::install_github("Hemken/Statamarkdown")
-```
-
-Setting up Stata.
-```{r, echo=FALSE, message=FALSE}
-library(Statamarkdown)
-stataexe <- find_stata()
-knitr::opts_chunk$set(engine.path=stataexe)
-```
-
-```{stata}
-*Instrumental variables
-
-ssc install outreg2, replace
-set more off
-
-//log using "D:\log.txt", text replace
-//use "D:\Funds.dta"
-local file "D:\r.xls"
-
-*OLS regression
-regress loge logsize
-est store ols
-outreg2 using `file', append
-
-*IV regression
-ivregress 2sls loge (logsize=age)
-est store iv
-outreg2 using `file', append
-
-*Two step LS procedure
-regress logsize age
-predict logsize_hat
-regress loge logsize_hat
-est store tsls
-outreg2 using `file', append
-
-
-est tab ols iv tsls, b se stats(N r2)
-```
-
-

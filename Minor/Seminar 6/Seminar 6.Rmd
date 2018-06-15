@@ -26,9 +26,9 @@ tsset n, monthly
 
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(tidyverse)
-library(haven) #чтение .dta файлов
+library(rio) # для чтения .dta файлов
 
-df <- read_dta(file = "crisis.dta")
+df <- import(file = "crisis.dta")
 ts <- ts(df[,c("labor", "oil_b_rub", "rwage", "u")], start = c(1999, 1), end = c(2009, 12), frequency = 12)
 ```
 
@@ -42,9 +42,13 @@ summary(lin_m1)
 ```
 
 ## Переделать график и добавить второй
+```{stata, eval=FALSE}
+reg rwage u oil_b_rub
+```
+
 ```{r}
 resid <- resid(lin_m1)
-plot(time(ts), resid)
+ggplot(time(ts), resid)
 ```
 
 ## Durbin-Watson test
