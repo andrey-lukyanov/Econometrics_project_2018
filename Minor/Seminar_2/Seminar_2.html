@@ -367,7 +367,14 @@ summary(olsreg)</code></pre>
 <pre class="stata"><code>for var BOISE CITCRP CONED ///
 CONTIL DATGEN DEC GENMIL ///
 GERBER IBM MOTOR PANAM PSNH ///
-TANDY TEXACO WEYER: gen y_X=X-RKFREE</code></pre>
+TANDY TEXACO WEYER: gen y_X=X-RKFREE
+
+foreach i of var  BOISE CITCRP CONED ///
+CONTIL DATGEN DEC GENMIL ///
+GERBER IBM MOTOR PANAM PSNH ///
+TANDY TEXACO WEYER {
+reg y_`i' x
+}</code></pre>
 <pre class="r"><code>names = list(&quot;BOISE&quot;, &quot;CITCRP&quot;, &quot;CONED&quot;, &quot;CONTIL&quot;, &quot;DATGEN&quot;, &quot;DEC&quot;, &quot;GENMIL&quot;, &quot;GERBER&quot;, &quot;IBM&quot;, &quot;MOTOR&quot;, &quot;PANAM&quot;, &quot;PSNH&quot;, &quot;TANDY&quot;, &quot;TEXACO&quot;, &quot;WEYER&quot;)
 
 for(i in names){
